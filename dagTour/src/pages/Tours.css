@@ -1,22 +1,33 @@
-.filter-toolbar {
-  --background: #F5F7F5;
-  --border-width: 0;
-  --padding-top: 4px;
-  --padding-bottom: 4px;
+.filter-icon-btn {
+  position: relative;
+  --color: #2E7D32;
+  font-size: 22px;
 }
 
-.filter-toolbar ion-segment {
-  --background: transparent;
+.filter-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #E53935;
+  border: 1.5px solid #fff;
 }
 
-.filter-toolbar ion-segment-button {
-  --color: #666;
-  --color-checked: #2E7D32;
-  --indicator-color: #2E7D32;
-  font-size: 13px;
-  font-weight: 500;
-  text-transform: none;
-  min-width: auto;
+.no-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60%;
+  color: #888;
+  font-size: 15px;
+  gap: 8px;
+}
+
+.no-results p {
+  margin: 0;
 }
 
 .list-content {
