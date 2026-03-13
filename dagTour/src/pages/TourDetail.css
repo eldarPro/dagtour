@@ -1,0 +1,21 @@
+.route-list {
+  margin-bottom: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--ion-color-light);
+}
+
+.route-item {
+  --padding-start: 8px;
+}
+
+.route-icon {
+  font-size: 20px;
+  margin-right: 12px;
+}
+
+.route-item ion-label ion-note {
+  font-size: 12px;
+  display: block;
+  margin-top: 2px;
+}

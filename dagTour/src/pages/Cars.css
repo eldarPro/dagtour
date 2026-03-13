@@ -1,0 +1,29 @@
+.filter-toolbar {
+  --background: #F5F7F5;
+  --border-width: 0;
+  --padding-top: 4px;
+  --padding-bottom: 4px;
+}
+
+.filter-toolbar ion-segment {
+  --background: transparent;
+}
+
+.filter-toolbar ion-segment-button {
+  --color: #666;
+  --color-checked: #2E7D32;
+  --indicator-color: #2E7D32;
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: none;
+  min-width: auto;
+}
+
+.list-content {
+  --background: #F5F7F5;
+}
+
+.card-list {
+  padding: 16px;
+  background: transparent;
+}
