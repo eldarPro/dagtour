@@ -50,16 +50,17 @@ const Cars: React.FC = () => {
         </IonToolbar>
         <IonToolbar className="view-toolbar">
           <IonSegment
+            mode="md"
             value={viewMode}
             onIonChange={(e) => setViewMode(e.detail.value as ViewMode)}
           >
-            <IonSegmentButton value="list">
+            <IonSegmentButton value="list" layout="icon-start">
               <IonIcon icon={listOutline} />
               <IonLabel>Список</IonLabel>
             </IonSegmentButton>
-            <IonSegmentButton value="map">
+            <IonSegmentButton value="map" layout="icon-start">
               <IonIcon icon={mapOutline} />
-              <IonLabel>По карте</IonLabel>
+              <IonLabel>Карта</IonLabel>
             </IonSegmentButton>
           </IonSegment>
         </IonToolbar>
