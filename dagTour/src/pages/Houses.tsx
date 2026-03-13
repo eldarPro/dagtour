@@ -9,47 +9,86 @@ import {
   IonSegmentButton,
   IonLabel,
   IonList,
+  IonIcon,
+  IonButtons,
+  IonButton,
 } from '@ionic/react';
+import { listOutline, mapOutline, optionsOutline } from 'ionicons/icons';
 import HouseCard from '../components/HouseCard';
+import HousesMap from '../components/HousesMap';
+import HousesFilterModal from '../components/HousesFilterModal';
 import { houses } from '../data/mockData';
+import { HouseFilters, DEFAULT_FILTERS, applyFilters, isFiltersActive } from '../data/houseFilters';
 import './Houses.css';
 
-const locations = ['Все', ...new Set(houses.map((h) => h.location))];
+type ViewMode = 'list' | 'map';
 
 const Houses: React.FC = () => {
-  const [selectedLocation, setSelectedLocation] = useState('Все');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [filters, setFilters] = useState<HouseFilters>(DEFAULT_FILTERS);
+  const [filterOpen, setFilterOpen] = useState(false);
 
-  const filtered = selectedLocation === 'Все'
-    ? houses
-    : houses.filter((h) => h.location === selectedLocation);
+  const filtered = applyFilters(houses, filters);
+  const hasActiveFilters = isFiltersActive(filters);
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
           <IonTitle>Аренда домов</IonTitle>
+          <IonButtons slot="end">
+            <IonButton fill="clear" onClick={() => setFilterOpen(true)} className="filter-icon-btn">
+              <IonIcon icon={optionsOutline} />
+              {hasActiveFilters && <span className="filter-badge" />}
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
-        <IonToolbar className="filter-toolbar">
+        <IonToolbar className="view-toolbar">
           <IonSegment
-            scrollable
-            value={selectedLocation}
-            onIonChange={(e) => setSelectedLocation(e.detail.value as string)}
+            value={viewMode}
+            onIonChange={(e) => setViewMode(e.detail.value as ViewMode)}
           >
-            {locations.map((loc) => (
-              <IonSegmentButton key={loc} value={loc}>
-                <IonLabel>{loc}</IonLabel>
-              </IonSegmentButton>
-            ))}
+            <IonSegmentButton value="list">
+              <IonIcon icon={listOutline} />
+              <IonLabel>Список</IonLabel>
+            </IonSegmentButton>
+            <IonSegmentButton value="map">
+              <IonIcon icon={mapOutline} />
+              <IonLabel>По карте</IonLabel>
+            </IonSegmentButton>
           </IonSegment>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen className="list-content">
-        <IonList lines="none" className="card-list">
-          {filtered.map((house) => (
-            <HouseCard key={house.id} house={house} />
-          ))}
-        </IonList>
-      </IonContent>
+
+      {viewMode === 'list' ? (
+        <IonContent fullscreen className="list-content">
+          {filtered.length === 0 ? (
+            <div className="no-results">
+              <p>Ничего не найдено</p>
+              <IonButton fill="clear" onClick={() => setFilters(DEFAULT_FILTERS)}>
+                Сбросить фильтры
+              </IonButton>
+            </div>
+          ) : (
+            <IonList lines="none" className="card-list">
+              {filtered.map((house) => (
+                <HouseCard key={house.id} house={house} />
+              ))}
+            </IonList>
+          )}
+        </IonContent>
+      ) : (
+        <IonContent fullscreen className="map-content">
+          <HousesMap houses={filtered} />
+        </IonContent>
+      )}
+
+      <HousesFilterModal
+        isOpen={filterOpen}
+        filters={filters}
+        onClose={() => setFilterOpen(false)}
+        onApply={setFilters}
+      />
     </IonPage>
   );
 };

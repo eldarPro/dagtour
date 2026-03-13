@@ -8,6 +8,8 @@ export interface House {
   rating: number;
   rooms: number;
   guests: number;
+  lat: number;
+  lng: number;
 }
 
 export interface Car {
@@ -42,6 +44,8 @@ export const houses: House[] = [
     rating: 4.8,
     rooms: 3,
     guests: 6,
+    lat: 42.3894,
+    lng: 46.9539,
   },
   {
     id: 2,
@@ -53,6 +57,8 @@ export const houses: House[] = [
     rating: 4.6,
     rooms: 4,
     guests: 8,
+    lat: 42.5647,
+    lng: 47.8736,
   },
   {
     id: 3,
@@ -64,6 +70,8 @@ export const houses: House[] = [
     rating: 4.9,
     rooms: 2,
     guests: 4,
+    lat: 42.0576,
+    lng: 48.2932,
   },
   {
     id: 4,
@@ -75,6 +83,8 @@ export const houses: House[] = [
     rating: 4.7,
     rooms: 2,
     guests: 4,
+    lat: 41.4576,
+    lng: 47.7322,
   },
   {
     id: 5,
@@ -86,6 +96,8 @@ export const houses: House[] = [
     rating: 4.5,
     rooms: 2,
     guests: 4,
+    lat: 42.9849,
+    lng: 47.5047,
   },
 ];
 
