@@ -19,6 +19,30 @@
   min-width: auto;
 }
 
+.view-toolbar {
+  --background: #F5F7F5;
+  --border-width: 0;
+  --padding-top: 4px;
+  --padding-bottom: 4px;
+}
+
+.view-toolbar ion-segment {
+  --background: #E8EDE8;
+  border-radius: 10px;
+  margin: 0 16px;
+}
+
+.view-toolbar ion-segment-button {
+  --color: #666;
+  --color-checked: #2E7D32;
+  --indicator-color: #fff;
+  --indicator-box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: none;
+  --border-radius: 8px;
+}
+
 .list-content {
   --background: #F5F7F5;
 }
@@ -26,4 +50,9 @@
 .card-list {
   padding: 16px;
   background: transparent;
+}
+
+.map-content {
+  --background: #fff;
+  position: relative;
 }

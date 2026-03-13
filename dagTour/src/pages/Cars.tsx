@@ -9,47 +9,90 @@ import {
   IonSegmentButton,
   IonLabel,
   IonList,
+  IonIcon,
+  IonButtons,
+  IonButton,
 } from '@ionic/react';
+import { listOutline, mapOutline, optionsOutline } from 'ionicons/icons';
 import CarCard from '../components/CarCard';
+import CarsMap from '../components/CarsMap';
 import { cars } from '../data/mockData';
+import CarsFilterModal from '../components/CarsFilterModal';
+import { CarFilters, DEFAULT_FILTERS, applyFilters, isFiltersActive } from '../data/carFilters';
 import './Cars.css';
 
-const types = ['Все', 'эконом', 'комфорт', 'внедорожник'];
+type ViewMode = 'list' | 'map';
 
 const Cars: React.FC = () => {
-  const [selectedType, setSelectedType] = useState('Все');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
-  const filtered = selectedType === 'Все'
-    ? cars
-    : cars.filter((c) => c.type === selectedType);
+  const [filters, setFilters] = useState<CarFilters>(DEFAULT_FILTERS);
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  const filtered = applyFilters(cars, filters);
+  const hasActiveFilters = isFiltersActive(filters);
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
           <IonTitle>Аренда авто</IonTitle>
+          <IonButtons slot="end">
+            <IonButton
+              fill="clear"
+              onClick={() => setFilterOpen(true)}
+              className="filter-icon-btn"
+            >
+              <IonIcon icon={optionsOutline} />
+              {hasActiveFilters && <span className="filter-badge" />}
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
-        <IonToolbar className="filter-toolbar">
+        <IonToolbar className="view-toolbar">
           <IonSegment
-            scrollable
-            value={selectedType}
-            onIonChange={(e) => setSelectedType(e.detail.value as string)}
+            value={viewMode}
+            onIonChange={(e) => setViewMode(e.detail.value as ViewMode)}
           >
-            {types.map((type) => (
-              <IonSegmentButton key={type} value={type}>
-                <IonLabel>{type === 'Все' ? 'Все' : type.charAt(0).toUpperCase() + type.slice(1)}</IonLabel>
-              </IonSegmentButton>
-            ))}
+            <IonSegmentButton value="list">
+              <IonIcon icon={listOutline} />
+              <IonLabel>Список</IonLabel>
+            </IonSegmentButton>
+            <IonSegmentButton value="map">
+              <IonIcon icon={mapOutline} />
+              <IonLabel>По карте</IonLabel>
+            </IonSegmentButton>
           </IonSegment>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen className="list-content">
-        <IonList lines="none" className="card-list">
-          {filtered.map((car) => (
-            <CarCard key={car.id} car={car} />
-          ))}
-        </IonList>
-      </IonContent>
+      {viewMode === 'list' ? (
+        <IonContent fullscreen className="list-content">
+          {filtered.length === 0 ? (
+            <div className="no-results">
+              <p>Ничего не найдено</p>
+              <IonButton fill="clear" onClick={() => setFilters(DEFAULT_FILTERS)}>
+                Сбросить фильтры
+              </IonButton>
+            </div>
+          ) : (
+            <IonList lines="none" className="card-list">
+              {filtered.map((car) => (
+                <CarCard key={car.id} car={car} />
+              ))}
+            </IonList>
+          )}
+        </IonContent>
+      ) : (
+        <IonContent fullscreen className="map-content">
+          <CarsMap cars={filtered} />
+        </IonContent>
+      )}
+
+      <CarsFilterModal
+        isOpen={filterOpen}
+        filters={filters}
+        onClose={() => setFilterOpen(false)}
+        onApply={setFilters}
+      />
     </IonPage>
   );
 };
