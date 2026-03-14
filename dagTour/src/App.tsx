@@ -11,8 +11,8 @@ import {
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import {
-  telescopeOutline,
-  telescopeSharp,
+  sparklesOutline,
+  sparklesSharp,
   carSportOutline,
   carSportSharp,
   compassOutline,
@@ -122,7 +122,7 @@ const App: React.FC = () => (
         </IonRouterOutlet>
         <IonTabBar slot="bottom">
           <IonTabButton tab="home" href="/home">
-            <IonIcon aria-hidden="true" ios={telescopeOutline} md={telescopeSharp} />
+            <IonIcon aria-hidden="true" ios={sparklesOutline} md={sparklesSharp} />
             <IonLabel>Главная</IonLabel>
           </IonTabButton>
           <IonTabButton tab="houses" href="/houses">
