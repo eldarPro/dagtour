@@ -15,17 +15,20 @@ import {
   IonText,
   IonNote,
   IonLabel,
+  IonBadge,
   IonFooter,
 } from '@ionic/react';
 import { locationOutline, star, bedOutline, peopleOutline } from 'ionicons/icons';
 import { houses } from '../data/mockData';
+import { loadMyHouses } from '../data/myHousesStorage';
 import './HouseDetail.css';
 
 const HouseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const house = houses.find((h) => h.id === Number(id));
+  const mockHouse = houses.find((h) => h.id === Number(id));
+  const myHouse = mockHouse ? undefined : loadMyHouses().find((h) => h.id === id);
 
-  if (!house) {
+  if (!mockHouse && !myHouse) {
     return (
       <IonPage>
         <IonContent className="ion-padding">
@@ -34,6 +37,18 @@ const HouseDetail: React.FC = () => {
       </IonPage>
     );
   }
+
+  const house = mockHouse ?? {
+    id: myHouse!.id,
+    name: myHouse!.name,
+    description: myHouse!.description,
+    pricePerNight: myHouse!.pricePerNight,
+    photo: undefined as string | undefined,
+    location: myHouse!.address,
+    rating: undefined as number | undefined,
+    rooms: myHouse!.rooms,
+    guests: myHouse!.guests,
+  };
 
   return (
     <IonPage>
@@ -46,31 +61,45 @@ const HouseDetail: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
-        <IonImg src={house.photo} alt={house.name} className="detail-img" />
+        <IonImg
+          src={house.photo ?? `https://placehold.co/400x300/2E7D32/FFFFFF?text=${encodeURIComponent(house.name)}`}
+          alt={house.name}
+          className="detail-img"
+        />
         <div className="detail-body">
-          <IonChip className="detail-rating-chip">
-            <IonIcon icon={star} />
-            <IonLabel>{house.rating}</IonLabel>
-          </IonChip>
+          {myHouse ? (
+            <IonBadge color="success" className="detail-own-badge">Моё объявление</IonBadge>
+          ) : house.rating != null ? (
+            <IonChip className="detail-rating-chip">
+              <IonIcon icon={star} />
+              <IonLabel>{house.rating}</IonLabel>
+            </IonChip>
+          ) : null}
 
           <IonText>
             <h1 className="detail-title">{house.name}</h1>
           </IonText>
 
-          <IonChip className="detail-location-chip" outline>
-            <IonIcon icon={locationOutline} color="primary" />
-            <IonLabel>{house.location}</IonLabel>
-          </IonChip>
+          {house.location && (
+            <IonChip className="detail-location-chip" outline>
+              <IonIcon icon={locationOutline} color="primary" />
+              <IonLabel>{house.location}</IonLabel>
+            </IonChip>
+          )}
 
           <div className="detail-chips">
-            <IonChip>
-              <IonIcon icon={bedOutline} color="primary" />
-              <IonLabel>{house.rooms} комнат</IonLabel>
-            </IonChip>
-            <IonChip>
-              <IonIcon icon={peopleOutline} color="primary" />
-              <IonLabel>до {house.guests} гостей</IonLabel>
-            </IonChip>
+            {house.rooms != null && (
+              <IonChip>
+                <IonIcon icon={bedOutline} color="primary" />
+                <IonLabel>{house.rooms} комнат</IonLabel>
+              </IonChip>
+            )}
+            {house.guests != null && (
+              <IonChip>
+                <IonIcon icon={peopleOutline} color="primary" />
+                <IonLabel>до {house.guests} гостей</IonLabel>
+              </IonChip>
+            )}
           </div>
 
           <IonText>
@@ -89,9 +118,22 @@ const HouseDetail: React.FC = () => {
             </IonText>
             <IonNote className="detail-per">/ ночь</IonNote>
           </div>
-          <IonButton slot="end" color="primary" shape="round" className="detail-book-btn">
-            Забронировать
-          </IonButton>
+          {!myHouse && (
+            <IonButton slot="end" color="primary" shape="round" className="detail-book-btn">
+              Забронировать
+            </IonButton>
+          )}
+          {myHouse && (
+            <IonButton
+              slot="end"
+              fill="outline"
+              shape="round"
+              routerLink={`/edit-house/${myHouse.id}`}
+              className="detail-book-btn"
+            >
+              Редактировать
+            </IonButton>
+          )}
         </IonToolbar>
       </IonFooter>
     </IonPage>

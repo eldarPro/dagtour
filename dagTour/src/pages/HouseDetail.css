@@ -17,6 +17,14 @@
   z-index: 1;
 }
 
+.detail-own-badge {
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  display: inline-flex;
+  margin-bottom: 4px;
+}
+
 .detail-rating-chip {
   --background: #FFF8E1;
   --color: #F9A825;

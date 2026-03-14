@@ -342,7 +342,7 @@ const Account: React.FC = () => {
         <IonItem button detail={true} routerLink="/my-cars">
           <IonLabel>Мои авто</IonLabel>
         </IonItem>
-        <IonItem button detail={true}>
+        <IonItem button detail={true} routerLink="/my-houses">
           <IonLabel>Мои дома</IonLabel>
         </IonItem>
         <IonItem button detail={true}>

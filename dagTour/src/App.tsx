@@ -33,6 +33,9 @@ import Account from './pages/Account';
 import MyCars from './pages/MyCars';
 import AddCar from './pages/AddCar';
 import EditCar from './pages/EditCar';
+import MyHouses from './pages/MyHouses';
+import AddHouse from './pages/AddHouse';
+import EditHouse from './pages/EditHouse';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -103,6 +106,15 @@ const App: React.FC = () => (
           </Route>
           <Route exact path="/edit-car/:id">
             <EditCar />
+          </Route>
+          <Route exact path="/my-houses">
+            <MyHouses />
+          </Route>
+          <Route exact path="/add-house">
+            <AddHouse />
+          </Route>
+          <Route exact path="/edit-house/:id">
+            <EditHouse />
           </Route>
           <Route exact path="/">
             <Redirect to="/home" />

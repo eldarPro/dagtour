@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import { House } from '../data/mockData';
 import { useHistory } from 'react-router-dom';
 import './HousesMap.css';
 
@@ -7,8 +6,16 @@ import './HousesMap.css';
 const YANDEX_API_KEY = '57398362-80f4-4fe3-a697-4fbd3ceb320c';
 const SCRIPT_ID = 'ymaps3-script';
 
+export interface MapHouseItem {
+  id: string | number;
+  name: string;
+  pricePerNight: number;
+  lat: number;
+  lng: number;
+}
+
 interface Props {
-  houses: House[];
+  houses: MapHouseItem[];
 }
 
 const HousesMap: React.FC<Props> = ({ houses }) => {

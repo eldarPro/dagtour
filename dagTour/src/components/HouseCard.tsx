@@ -10,33 +10,78 @@ import {
   IonImg,
   IonText,
   IonNote,
+  IonButton,
 } from '@ionic/react';
-import { locationOutline, star } from 'ionicons/icons';
-import { House } from '../data/mockData';
+import { locationOutline, star, createOutline } from 'ionicons/icons';
 import './HouseCard.css';
 
-interface HouseCardProps {
-  house: House;
+export interface HouseCardData {
+  id: string;
+  name: string;
+  pricePerNight: number;
+  photo?: string;
+  location?: string;
+  rating?: number;
+  rooms?: number;
+  guests?: number;
 }
 
-const HouseCard: React.FC<HouseCardProps> = ({ house }) => {
+interface HouseCardProps {
+  house: HouseCardData;
+  /** Куда ведёт клик по карточке */
+  href?: string;
+  /** Показывает кнопку редактирования */
+  isOwn?: boolean;
+  /** Показывает бейдж «Моё объявление» (только на общей странице домов) */
+  showOwnBadge?: boolean;
+}
+
+const HouseCard: React.FC<HouseCardProps> = ({ house, href, isOwn, showOwnBadge }) => {
+  const placeholder = `https://placehold.co/400x300/2E7D32/FFFFFF?text=${encodeURIComponent(house.name)}`;
+
   return (
-    <IonCard className="house-card" routerLink={`/houses/${house.id}`} button>
-      <IonImg src={house.photo} alt={house.name} className="house-card-img" />
+    <IonCard
+      className="house-card"
+      button={!!href}
+      routerLink={href}
+    >
+      <IonImg src={house.photo ?? placeholder} alt={house.name} className="house-card-img" />
       <IonCardHeader>
-        <IonBadge className="house-card-rating">
-          <IonIcon icon={star} /> {house.rating}
-        </IonBadge>
+        <div className="house-card-badges">
+          {house.rating != null && (
+            <IonBadge className="house-card-rating">
+              <IonIcon icon={star} /> {house.rating}
+            </IonBadge>
+          )}
+          {showOwnBadge && (
+            <IonBadge color="success" className="house-card-own-badge">Моё объявление</IonBadge>
+          )}
+        </div>
         <IonCardTitle className="house-card-title">{house.name}</IonCardTitle>
-        <IonCardSubtitle className="house-card-location">
-          <IonIcon icon={locationOutline} /> {house.location}
-        </IonCardSubtitle>
+        {house.location && (
+          <IonCardSubtitle className="house-card-location">
+            <IonIcon icon={locationOutline} /> {house.location}
+          </IonCardSubtitle>
+        )}
       </IonCardHeader>
       <IonCardContent className="house-card-footer">
         <IonText color="primary" className="house-card-price">
           <strong>{house.pricePerNight.toLocaleString('ru-RU')} ₽</strong>
         </IonText>
         <IonNote className="house-card-per">/ ночь</IonNote>
+        {isOwn && (
+          <IonButton
+            fill="clear"
+            size="small"
+            className="house-card-edit-btn"
+            routerLink={`/edit-house/${house.id}`}
+            routerDirection="forward"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <IonIcon slot="start" icon={createOutline} />
+            Редактировать
+          </IonButton>
+        )}
       </IonCardContent>
     </IonCard>
   );
