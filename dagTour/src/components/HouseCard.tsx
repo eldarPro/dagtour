@@ -5,8 +5,8 @@ import {
   IonCardHeader,
   IonCardTitle,
   IonCardSubtitle,
-  IonIcon,
   IonBadge,
+  IonIcon,
   IonImg,
   IonText,
   IonNote,
@@ -28,47 +28,42 @@ export interface HouseCardData {
 
 interface HouseCardProps {
   house: HouseCardData;
-  /** Куда ведёт клик по карточке */
   href?: string;
-  /** Показывает кнопку редактирования */
   isOwn?: boolean;
-  /** Показывает бейдж «Моё объявление» (только на общей странице домов) */
   showOwnBadge?: boolean;
 }
 
 const HouseCard: React.FC<HouseCardProps> = ({ house, href, isOwn, showOwnBadge }) => {
-  const placeholder = `https://placehold.co/400x300/2E7D32/FFFFFF?text=${encodeURIComponent(house.name)}`;
+  const placeholder = `https://placehold.co/400x300/0E7490/FFFFFF?text=${encodeURIComponent(house.name)}`;
 
   return (
-    <IonCard
-      className="house-card"
-      button={!!href}
-      routerLink={href}
-    >
-      <IonImg src={house.photo ?? placeholder} alt={house.name} className="house-card-img" />
-      <IonCardHeader>
-        <div className="house-card-badges">
+    <IonCard className="house-card" button={!!href} routerLink={href}>
+      <div className="house-card-img-wrap">
+        <IonImg src={house.photo ?? placeholder} alt={house.name} className="house-card-img" />
+        <div className="house-card-badges-overlay">
           {house.rating != null && (
-            <IonBadge className="house-card-rating">
+            <IonBadge className="house-card-badge house-card-badge--rating">
               <IonIcon icon={star} /> {house.rating}
             </IonBadge>
           )}
           {showOwnBadge && (
-            <IonBadge color="success" className="house-card-own-badge">Моё объявление</IonBadge>
+            <IonBadge color="success" className="house-card-badge">Моё</IonBadge>
           )}
         </div>
+      </div>
+      <IonCardHeader className="house-card-header">
         <IonCardTitle className="house-card-title">{house.name}</IonCardTitle>
         {house.location && (
-          <IonCardSubtitle className="house-card-location">
+          <IonCardSubtitle className="house-card-subtitle">
             <IonIcon icon={locationOutline} /> {house.location}
           </IonCardSubtitle>
         )}
       </IonCardHeader>
       <IonCardContent className="house-card-footer">
-        <IonText color="primary" className="house-card-price">
+        <IonText color="primary">
           <strong>{house.pricePerNight.toLocaleString('ru-RU')} ₽</strong>
         </IonText>
-        <IonNote className="house-card-per">/ ночь</IonNote>
+        <IonNote> / ночь</IonNote>
         {isOwn && (
           <IonButton
             fill="clear"

@@ -1,90 +1,96 @@
 .house-card {
   --background: #fff;
-  border-radius: 20px;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+  border-radius: 16px;
   margin: 0 0 16px;
   overflow: hidden;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+}
+
+.house-card-img-wrap {
+  position: relative;
 }
 
 .house-card-img {
   width: 100%;
-  height: 180px;
+  height: 160px;
+  display: block;
 }
 
 .house-card-img::part(image) {
   object-fit: cover;
-  height: 100%;
+  width: 100%;
+  height: 160px;
 }
 
-.house-card ion-card-header {
-  padding: 12px 16px 4px;
+.house-card-badges-overlay {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  gap: 6px;
 }
 
-.house-card-rating {
-  --background: #FFF8E1;
-  --color: #F9A825;
-  font-size: 13px;
+.house-card-badge {
+  font-size: 11px;
   font-weight: 600;
+  padding: 3px 8px;
   border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  backdrop-filter: blur(4px);
 }
 
-.house-card-rating ion-icon {
-  font-size: 13px;
+.house-card-badge--rating {
+  --background: rgba(0, 0, 0, 0.55);
+  --color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.house-card-badge--rating ion-icon {
+  font-size: 12px;
+  color: #FFD54F;
+}
+
+.house-card-header {
+  padding: 10px 12px 0;
 }
 
 .house-card-title {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.house-card-location {
-  font-size: 13px;
+.house-card-subtitle {
+  font-size: 12px;
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
-.house-card-location ion-icon {
-  font-size: 15px;
+.house-card-subtitle ion-icon {
+  font-size: 13px;
   color: #0E7490;
-}
-
-.house-card-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-
-.house-card-own-badge {
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: 8px;
 }
 
 .house-card-footer {
   display: flex;
-  align-items: baseline;
-  gap: 4px;
-  padding-top: 10px;
+  align-items: center;
+  padding: 6px 12px 12px;
+  font-size: 15px;
   border-top: 1px solid #f0f0f0;
-  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.house-card-footer ion-note {
+  font-size: 12px;
 }
 
 .house-card-edit-btn {
-  margin-left: auto;
   --color: #0E7490;
-  font-size: 13px;
-}
-
-.house-card-price {
-  font-size: 18px;
-}
-
-.house-card-per {
+  margin-left: auto;
   font-size: 13px;
 }

@@ -29,56 +29,41 @@ export interface CarCardData {
 
 interface CarCardProps {
   car: CarCardData;
-  /** Куда ведёт клик по карточке */
   href?: string;
-  /** Показывает кнопку редактирования */
   isOwn?: boolean;
-  /** Показывает бейдж «Моё объявление» (только на общей странице авто) */
   showOwnBadge?: boolean;
 }
 
 const CarCard: React.FC<CarCardProps> = ({ car, href, isOwn, showOwnBadge }) => {
-  const placeholder = `https://placehold.co/400x300/2E7D32/FFFFFF?text=${encodeURIComponent(car.brand + ' ' + car.model)}`;
+  const placeholder = `https://placehold.co/400x300/0E7490/FFFFFF?text=${encodeURIComponent(car.brand + ' ' + car.model)}`;
 
   return (
-    <IonCard
-      className="car-card"
-      button={!!href}
-      routerLink={href}
-    >
-      <IonImg src={car.photo ?? placeholder} alt={`${car.brand} ${car.model}`} className="car-card-img" />
-      <IonCardHeader>
-        <div className="car-card-badges">
+    <IonCard className="car-card" button={!!href} routerLink={href}>
+      <div className="car-card-img-wrap">
+        <IonImg src={car.photo ?? placeholder} alt={`${car.brand} ${car.model}`} className="car-card-img" />
+        <div className="car-card-badges-overlay">
           {car.type && (
-            <IonBadge color="secondary" className="car-card-type">{car.type}</IonBadge>
+            <IonBadge color="secondary" className="car-card-badge">{car.type}</IonBadge>
           )}
           {showOwnBadge && (
-            <IonBadge color="success" className="car-card-own-badge">Моё объявление</IonBadge>
+            <IonBadge color="success" className="car-card-badge">Моё</IonBadge>
           )}
         </div>
+      </div>
+      <IonCardHeader className="car-card-header">
         <IonCardTitle className="car-card-title">{car.brand} {car.model}</IonCardTitle>
-        <IonCardSubtitle className="car-card-details">
-          {car.seats != null && (
-            <>
-              <IonIcon icon={peopleOutline} /> {car.seats} мест
-            </>
-          )}
-          {car.seats != null && car.transmission && <span className="car-card-dot">·</span>}
-          {car.transmission && (
-            <>
-              <IonIcon icon={cogOutline} /> {car.transmission}
-            </>
-          )}
-          {car.year && !car.seats && (
-            <span>{car.year} г.</span>
-          )}
+        <IonCardSubtitle className="car-card-subtitle">
+          {car.seats != null && <><IonIcon icon={peopleOutline} /> {car.seats} мест</>}
+          {car.seats != null && car.transmission && <span> · </span>}
+          {car.transmission && <><IonIcon icon={cogOutline} /> {car.transmission}</>}
+          {!car.seats && car.year && <span>{car.year} г.</span>}
         </IonCardSubtitle>
       </IonCardHeader>
       <IonCardContent className="car-card-footer">
-        <IonText color="primary" className="car-card-price">
+        <IonText color="primary">
           <strong>{car.pricePerDay.toLocaleString('ru-RU')} ₽</strong>
         </IonText>
-        <IonNote className="car-card-per">/ день</IonNote>
+        <IonNote> / день</IonNote>
         {isOwn && (
           <IonButton
             fill="clear"

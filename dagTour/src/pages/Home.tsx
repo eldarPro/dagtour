@@ -22,8 +22,11 @@ import {
   IonNote,
   IonLabel,
 } from '@ionic/react';
-import { homeOutline, carOutline, mapOutline, chevronForwardOutline, star, locationOutline, timeOutline, peopleOutline } from 'ionicons/icons';
+
+import { homeOutline, carOutline, mapOutline, chevronForwardOutline, timeOutline } from 'ionicons/icons';
 import { houses, cars, tours } from '../data/mockData';
+import CarCard from '../components/CarCard';
+import HouseCard from '../components/HouseCard';
 import './Home.css';
 
 const Home: React.FC = () => {
@@ -101,24 +104,18 @@ const Home: React.FC = () => {
         </IonGrid>
         <div className="scroll-row">
           {houses.slice(0, 4).map((house) => (
-            <IonCard key={house.id} routerLink={`/houses/${house.id}`} className="mini-card">
-              <IonImg src={house.photo} alt={house.name} className="mini-card-img" />
-              <IonBadge className="mini-card-badge">
-                <IonIcon icon={star} /> {house.rating}
-              </IonBadge>
-              <IonCardHeader className="mini-card-header">
-                <IonCardTitle className="mini-card-title">{house.name}</IonCardTitle>
-                <IonCardSubtitle className="mini-card-subtitle">
-                  <IonIcon icon={locationOutline} /> {house.location}
-                </IonCardSubtitle>
-              </IonCardHeader>
-              <IonCardContent className="mini-card-footer">
-                <IonText color="primary">
-                  <strong>{house.pricePerNight.toLocaleString('ru-RU')} ₽</strong>
-                </IonText>
-                <IonNote> / ночь</IonNote>
-              </IonCardContent>
-            </IonCard>
+            <HouseCard
+              key={house.id}
+              house={{
+                id: String(house.id),
+                name: house.name,
+                pricePerNight: house.pricePerNight,
+                photo: house.photo,
+                location: house.location,
+                rating: house.rating,
+              }}
+              href={`/houses/${house.id}`}
+            />
           ))}
         </div>
 
@@ -137,24 +134,20 @@ const Home: React.FC = () => {
         </IonGrid>
         <div className="scroll-row">
           {cars.slice(0, 4).map((car) => (
-            <IonCard key={car.id} routerLink={`/cars/${car.id}`} className="mini-card">
-              <IonImg src={car.photo} alt={`${car.brand} ${car.model}`} className="mini-card-img" />
-              <IonBadge color="secondary" className="mini-card-badge mini-card-badge--type">
-                {car.type}
-              </IonBadge>
-              <IonCardHeader className="mini-card-header">
-                <IonCardTitle className="mini-card-title">{car.brand} {car.model}</IonCardTitle>
-                <IonCardSubtitle className="mini-card-subtitle">
-                  <IonIcon icon={peopleOutline} /> {car.seats} мест · {car.transmission}
-                </IonCardSubtitle>
-              </IonCardHeader>
-              <IonCardContent className="mini-card-footer">
-                <IonText color="primary">
-                  <strong>{car.pricePerDay.toLocaleString('ru-RU')} ₽</strong>
-                </IonText>
-                <IonNote> / день</IonNote>
-              </IonCardContent>
-            </IonCard>
+            <CarCard
+              key={car.id}
+              car={{
+                id: String(car.id),
+                brand: car.brand,
+                model: car.model,
+                pricePerDay: car.pricePerDay,
+                photo: car.photo,
+                type: car.type,
+                seats: car.seats,
+                transmission: car.transmission,
+              }}
+              href={`/cars/${car.id}`}
+            />
           ))}
         </div>
 
