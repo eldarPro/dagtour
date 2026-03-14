@@ -1,0 +1,43 @@
+.add-car-content {
+  --background: #F5F7F5;
+}
+
+.add-car-form-wrapper {
+  padding: 16px;
+}
+
+.add-car-form {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.add-car-required {
+  color: #d32f2f;
+}
+
+.add-car-error {
+  padding: 12px 4px 0;
+}
+
+.add-car-actions {
+  padding: 20px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.add-car-actions ion-button {
+  --border-radius: 12px;
+}
+
+.add-car-actions ion-button:first-child {
+  --background: #2E7D32;
+}
+
+.add-car-section-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  padding: 16px 4px 4px 4px;
+}

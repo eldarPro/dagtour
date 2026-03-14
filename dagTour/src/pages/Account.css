@@ -1,0 +1,114 @@
+.account-content {
+  --background: #F5F7F5;
+}
+
+.account-auth {
+  padding: 16px;
+}
+
+.account-mock-hint {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  background: #E8F5E9;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #2E7D32;
+}
+
+.account-auth ion-segment {
+  margin-bottom: 16px;
+}
+
+.account-form {
+  background: transparent;
+}
+
+.account-actions {
+  padding: 16px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-error {
+  padding: 12px 16px 0;
+}
+
+.account-profile {
+  padding: 16px;
+}
+
+.account-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.account-profile-header {
+  justify-content: space-between;
+}
+
+.account-profile-info {
+  flex: 1;
+}
+
+.account-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #2E7D32;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 20px;
+}
+
+.account-profile-info h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.account-profile-info p {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.account-edit-btn {
+  border: none;
+  background: transparent;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2E7D32;
+  font-size: 20px;
+}
+
+.account-edit-btn ion-icon {
+  font-size: 22px;
+}
+
+.account-edit-form {
+  margin-top: 4px;
+}
+
+.account-actions--profile {
+  padding-top: 12px;
+}
+
+.account-menu {
+  margin-top: 8px;
+}
+
+.account-logout-item {
+  margin-top: 12px;
+}
+
+.account-logout-item ion-button {
+  width: 100%;
+}
+

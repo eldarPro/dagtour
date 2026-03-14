@@ -1,13 +1,21 @@
 import React, { useEffect, useRef } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Car } from '../data/mockData';
 import './CarsMap.css';
 
 const YANDEX_API_KEY = '57398362-80f4-4fe3-a697-4fbd3ceb320c';
 const SCRIPT_ID = 'ymaps3-script';
 
+export interface MapCarItem {
+  id: string | number;
+  brand: string;
+  model: string;
+  pricePerDay: number;
+  lat: number;
+  lng: number;
+}
+
 interface Props {
-  cars: Car[];
+  cars: MapCarItem[];
 }
 
 const CarsMap: React.FC<Props> = ({ cars }) => {
@@ -86,4 +94,3 @@ const CarsMap: React.FC<Props> = ({ cars }) => {
 };
 
 export default CarsMap;
-

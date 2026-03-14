@@ -12,25 +12,82 @@ import {
   IonIcon,
   IonButtons,
   IonButton,
+  useIonViewWillEnter,
 } from '@ionic/react';
 import { listOutline, mapOutline, optionsOutline } from 'ionicons/icons';
-import CarCard from '../components/CarCard';
-import CarsMap from '../components/CarsMap';
-import { cars } from '../data/mockData';
+import CarCard, { CarCardData } from '../components/CarCard';
+import CarsMap, { MapCarItem } from '../components/CarsMap';
+import { cars, Car } from '../data/mockData';
 import CarsFilterModal from '../components/CarsFilterModal';
 import { CarFilters, DEFAULT_FILTERS, applyFilters, isFiltersActive } from '../data/carFilters';
+import { MyCar, loadMyCars } from '../data/myCarsStorage';
 import './Cars.css';
 
 type ViewMode = 'list' | 'map';
 
+const TRANSMISSION_LABEL: Record<string, string> = {
+  auto: 'Автомат',
+  manual: 'Механика',
+  robot: 'Робот',
+};
+
+const mockToCardData = (car: Car): CarCardData => ({
+  id: String(car.id),
+  brand: car.brand,
+  model: car.model,
+  pricePerDay: car.pricePerDay,
+  photo: car.photo,
+  type: car.type,
+  seats: car.seats,
+  transmission: car.transmission,
+});
+
+const myCarToCardData = (car: MyCar): CarCardData => ({
+  id: car.id,
+  brand: car.brand,
+  model: car.model,
+  year: car.year,
+  pricePerDay: car.pricePerDay,
+  transmission: car.transmission ? (TRANSMISSION_LABEL[car.transmission] ?? car.transmission) : undefined,
+});
+
 const Cars: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-
   const [filters, setFilters] = useState<CarFilters>(DEFAULT_FILTERS);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [myCars, setMyCars] = useState<MyCar[]>([]);
 
-  const filtered = applyFilters(cars, filters);
+  useIonViewWillEnter(() => {
+    setMyCars(loadMyCars());
+  });
+
+  const filteredMock = applyFilters(cars, filters);
+
+  const filteredOwn = myCars.filter(
+    (c) => c.pricePerDay >= filters.priceMin && c.pricePerDay <= filters.priceMax
+  );
+
   const hasActiveFilters = isFiltersActive(filters);
+
+  const mockMapItems: MapCarItem[] = filteredMock.map((c) => ({
+    id: c.id,
+    brand: c.brand,
+    model: c.model,
+    pricePerDay: c.pricePerDay,
+    lat: c.lat,
+    lng: c.lng,
+  }));
+
+  const ownMapItems: MapCarItem[] = myCars
+    .filter((c) => c.lat != null && c.lng != null)
+    .map((c) => ({
+      id: c.id,
+      brand: c.brand,
+      model: c.model,
+      pricePerDay: c.pricePerDay,
+      lat: c.lat!,
+      lng: c.lng!,
+    }));
 
   return (
     <IonPage>
@@ -65,9 +122,10 @@ const Cars: React.FC = () => {
           </IonSegment>
         </IonToolbar>
       </IonHeader>
+
       {viewMode === 'list' ? (
         <IonContent fullscreen className="list-content">
-          {filtered.length === 0 ? (
+          {filteredMock.length === 0 && filteredOwn.length === 0 ? (
             <div className="no-results">
               <p>Ничего не найдено</p>
               <IonButton fill="clear" onClick={() => setFilters(DEFAULT_FILTERS)}>
@@ -76,15 +134,28 @@ const Cars: React.FC = () => {
             </div>
           ) : (
             <IonList lines="none" className="card-list">
-              {filtered.map((car) => (
-                <CarCard key={car.id} car={car} />
+              {filteredOwn.map((car) => (
+                <CarCard
+                  key={car.id}
+                  car={myCarToCardData(car)}
+                  href={`/cars/${car.id}`}
+                  isOwn
+                  showOwnBadge
+                />
+              ))}
+              {filteredMock.map((car) => (
+                <CarCard
+                  key={car.id}
+                  car={mockToCardData(car)}
+                  href={`/cars/${car.id}`}
+                />
               ))}
             </IonList>
           )}
         </IonContent>
       ) : (
         <IonContent fullscreen className="map-content">
-          <CarsMap cars={filtered} />
+          <CarsMap cars={[...ownMapItems, ...mockMapItems]} />
         </IonContent>
       )}
 
