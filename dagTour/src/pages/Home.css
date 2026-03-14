@@ -1,3 +1,7 @@
+.home-content {
+  --background: #F0F9FF;
+}
+
 /* ── Banner ── */
 .home-banner {
   --background: linear-gradient(135deg, #164E63 0%, #0E7490 40%, #0891B2 100%);

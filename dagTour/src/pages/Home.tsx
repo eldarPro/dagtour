@@ -36,7 +36,7 @@ const Home: React.FC = () => {
           <IonTitle>dagTour</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen>
+      <IonContent fullscreen className="home-content">
 
         <IonCard className="home-banner">
           <IonCardContent>
