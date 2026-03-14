@@ -18,7 +18,7 @@ import {
   IonBadge,
   IonFooter,
 } from '@ionic/react';
-import { locationOutline, star, bedOutline, peopleOutline } from 'ionicons/icons';
+import { locationOutline, star, bedOutline, peopleOutline, chevronBackOutline } from 'ionicons/icons';
 import { houses } from '../data/mockData';
 import { loadMyHouses } from '../data/myHousesStorage';
 import './HouseDetail.css';
@@ -55,7 +55,7 @@ const HouseDetail: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/houses" text="Назад" />
+            <IonBackButton defaultHref="/houses" text="" icon={chevronBackOutline} />
           </IonButtons>
           <IonTitle>{house.name}</IonTitle>
         </IonToolbar>

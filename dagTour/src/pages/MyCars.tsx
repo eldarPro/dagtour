@@ -12,7 +12,7 @@ import {
   IonList,
   useIonViewWillEnter,
 } from '@ionic/react';
-import { addOutline, carOutline } from 'ionicons/icons';
+import { addOutline, carOutline, chevronBackOutline } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import CarCard, { CarCardData } from '../components/CarCard';
 import { MyCar, loadMyCars } from '../data/myCarsStorage';
@@ -46,7 +46,7 @@ const MyCars: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/account" text="Назад" />
+            <IonBackButton defaultHref="/account" text="" icon={chevronBackOutline} />
           </IonButtons>
           <IonTitle>Мои авто</IonTitle>
           <IonButtons slot="end">

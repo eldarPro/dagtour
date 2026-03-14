@@ -21,6 +21,7 @@ import {
 } from '@ionic/react';
 import { useHistory, useParams } from 'react-router-dom';
 import { loadMyCars, updateMyCar, deleteMyCar, MyCar } from '../data/myCarsStorage';
+import { chevronBackOutline } from 'ionicons/icons';
 import LocationPicker from '../components/LocationPicker';
 import './AddCar.css';
 
@@ -112,7 +113,7 @@ const EditCar: React.FC = () => {
         <IonHeader>
           <IonToolbar>
             <IonButtons slot="start">
-              <IonBackButton defaultHref="/my-cars" text="Назад" />
+              <IonBackButton defaultHref="/my-cars" text="" icon={chevronBackOutline} />
             </IonButtons>
             <IonTitle>Редактирование</IonTitle>
           </IonToolbar>
@@ -131,7 +132,7 @@ const EditCar: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/my-cars" text="Назад" />
+            <IonBackButton defaultHref="/my-cars" text="" icon={chevronBackOutline} />
           </IonButtons>
           <IonTitle>Редактирование</IonTitle>
         </IonToolbar>

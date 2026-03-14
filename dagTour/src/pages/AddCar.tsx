@@ -19,6 +19,7 @@ import {
 } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import { saveMyCar } from '../data/myCarsStorage';
+import { chevronBackOutline } from 'ionicons/icons';
 import LocationPicker from '../components/LocationPicker';
 import './AddCar.css';
 
@@ -60,7 +61,7 @@ const AddCar: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/my-cars" text="Назад" />
+            <IonBackButton defaultHref="/my-cars" text="" icon={chevronBackOutline} />
           </IonButtons>
           <IonTitle>Новое объявление</IonTitle>
         </IonToolbar>

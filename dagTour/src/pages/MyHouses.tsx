@@ -12,7 +12,7 @@ import {
   IonList,
   useIonViewWillEnter,
 } from '@ionic/react';
-import { addOutline, homeOutline } from 'ionicons/icons';
+import { addOutline, homeOutline, chevronBackOutline } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import HouseCard, { HouseCardData } from '../components/HouseCard';
 import { MyHouse, loadMyHouses } from '../data/myHousesStorage';
@@ -40,7 +40,7 @@ const MyHouses: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/account" text="Назад" />
+            <IonBackButton defaultHref="/account" text="" icon={chevronBackOutline} />
           </IonButtons>
           <IonTitle>Мои дома</IonTitle>
           <IonButtons slot="end">

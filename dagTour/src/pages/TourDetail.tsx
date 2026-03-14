@@ -19,7 +19,7 @@ import {
   IonItem,
   IonFooter,
 } from '@ionic/react';
-import { timeOutline, navigateOutline, ellipseOutline, flagOutline, locationOutline } from 'ionicons/icons';
+import { timeOutline, navigateOutline, ellipseOutline, flagOutline, locationOutline, chevronBackOutline } from 'ionicons/icons';
 import { tours } from '../data/mockData';
 import './TourDetail.css';
 
@@ -54,7 +54,7 @@ const TourDetail: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/tours" text="Назад" />
+            <IonBackButton defaultHref="/tours" text="" icon={chevronBackOutline} />
           </IonButtons>
           <IonTitle>{tour.name}</IonTitle>
         </IonToolbar>

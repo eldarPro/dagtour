@@ -20,7 +20,7 @@ import {
   IonItem,
   IonFooter,
 } from '@ionic/react';
-import { peopleOutline, cogOutline, checkmarkCircleOutline, calendarOutline } from 'ionicons/icons';
+import { peopleOutline, cogOutline, checkmarkCircleOutline, calendarOutline, chevronBackOutline } from 'ionicons/icons';
 import { cars } from '../data/mockData';
 import { loadMyCars, MyCar } from '../data/myCarsStorage';
 import './CarDetail.css';
@@ -43,7 +43,7 @@ const CarDetail: React.FC = () => {
         <IonHeader>
           <IonToolbar>
             <IonButtons slot="start">
-              <IonBackButton defaultHref="/cars" text="Назад" />
+              <IonBackButton defaultHref="/cars" text="" icon={chevronBackOutline} />
             </IonButtons>
           </IonToolbar>
         </IonHeader>
@@ -73,7 +73,7 @@ const CarDetail: React.FC = () => {
         <IonHeader>
           <IonToolbar>
             <IonButtons slot="start">
-              <IonBackButton defaultHref="/cars" text="Назад" />
+              <IonBackButton defaultHref="/cars" text="" icon={chevronBackOutline} />
             </IonButtons>
             <IonTitle>{myCar.brand} {myCar.model}</IonTitle>
           </IonToolbar>
@@ -154,7 +154,7 @@ const CarDetail: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/cars" text="Назад" />
+            <IonBackButton defaultHref="/cars" text="" icon={chevronBackOutline} />
           </IonButtons>
           <IonTitle>{car.brand} {car.model}</IonTitle>
         </IonToolbar>
