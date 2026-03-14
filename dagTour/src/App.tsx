@@ -13,14 +13,14 @@ import { IonReactRouter } from '@ionic/react-router';
 import {
   homeOutline,
   homeSharp,
-  carOutline,
-  carSharp,
-  mapOutline,
-  mapSharp,
-  businessOutline,
-  businessSharp,
-  personOutline,
-  personSharp,
+  carSportOutline,
+  carSportSharp,
+  compassOutline,
+  compassSharp,
+  bedOutline,
+  bedSharp,
+  personCircleOutline,
+  personCircleSharp,
 } from 'ionicons/icons';
 import Home from './pages/Home';
 import Houses from './pages/Houses';
@@ -126,19 +126,19 @@ const App: React.FC = () => (
             <IonLabel>Главная</IonLabel>
           </IonTabButton>
           <IonTabButton tab="houses" href="/houses">
-            <IonIcon aria-hidden="true" ios={businessOutline} md={businessSharp} />
+            <IonIcon aria-hidden="true" ios={bedOutline} md={bedSharp} />
             <IonLabel>Дома</IonLabel>
           </IonTabButton>
           <IonTabButton tab="cars" href="/cars">
-            <IonIcon aria-hidden="true" ios={carOutline} md={carSharp} />
+            <IonIcon aria-hidden="true" ios={carSportOutline} md={carSportSharp} />
             <IonLabel>Авто</IonLabel>
           </IonTabButton>
           <IonTabButton tab="tours" href="/tours">
-            <IonIcon aria-hidden="true" ios={mapOutline} md={mapSharp} />
+            <IonIcon aria-hidden="true" ios={compassOutline} md={compassSharp} />
             <IonLabel>Туры</IonLabel>
           </IonTabButton>
           <IonTabButton tab="account" href="/account">
-            <IonIcon aria-hidden="true" ios={personOutline} md={personSharp} />
+            <IonIcon aria-hidden="true" ios={personCircleOutline} md={personCircleSharp} />
             <IonLabel>Кабинет</IonLabel>
           </IonTabButton>
         </IonTabBar>
