@@ -12,7 +12,7 @@ import {
   IonNote,
   IonButton,
 } from '@ionic/react';
-import { peopleOutline, cogOutline, createOutline, carOutline } from 'ionicons/icons';
+import { peopleOutline, cogOutline, createOutline } from 'ionicons/icons';
 import './CarCard.css';
 
 export interface CarCardData {
@@ -50,12 +50,6 @@ const CarCard: React.FC<CarCardProps> = ({ car, href, isOwn, showOwnBadge }) => 
       </IonCardHeader>
       <IonCardContent>
         <div className="car-card-chips">
-          {car.type && (
-            <IonChip className="car-card-chip">
-              <IonIcon icon={carOutline} />
-              <IonText>{car.type}</IonText>
-            </IonChip>
-          )}
           {car.seats != null && (
             <IonChip className="car-card-chip">
               <IonIcon icon={peopleOutline} />
