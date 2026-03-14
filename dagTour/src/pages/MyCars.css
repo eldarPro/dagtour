@@ -1,5 +1,5 @@
 .my-cars-content {
-  --background: #F5F7F5;
+  --background: #F0F9FF;
 }
 
 .my-cars-empty {
@@ -16,7 +16,7 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: #E8F5E9;
+  background: #ECFEFF;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -25,7 +25,7 @@
 
 .my-cars-empty-icon ion-icon {
   font-size: 40px;
-  color: #2E7D32;
+  color: #0E7490;
 }
 
 .my-cars-empty h3 {
@@ -43,7 +43,7 @@
 }
 
 .my-cars-add-btn {
-  --background: #2E7D32;
+  --background: #0E7490;
   --border-radius: 12px;
   width: 100%;
   max-width: 280px;

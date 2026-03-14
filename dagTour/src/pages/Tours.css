@@ -1,6 +1,6 @@
 .filter-icon-btn {
   position: relative;
-  --color: #2E7D32;
+  --color: #0E7490;
   font-size: 22px;
 }
 
@@ -31,7 +31,7 @@
 }
 
 .list-content {
-  --background: #F5F7F5;
+  --background: #F0F9FF;
 }
 
 .card-list {

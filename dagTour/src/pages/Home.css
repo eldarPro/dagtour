@@ -1,6 +1,6 @@
 /* ── Banner ── */
 .home-banner {
-  --background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 40%, #43A047 100%);
+  --background: linear-gradient(135deg, #164E63 0%, #0E7490 40%, #0891B2 100%);
   border-radius: 0;
   margin: 0;
   box-shadow: none;
@@ -28,7 +28,7 @@
   --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   --background: #fff;
   --placeholder-color: #aaa;
-  --icon-color: #2E7D32;
+  --icon-color: #0E7490;
   margin: -20px 16px 0;
   position: relative;
   z-index: 2;
@@ -63,17 +63,17 @@
 }
 
 .cat-card-icon--green {
-  background: linear-gradient(135deg, #2E7D32, #43A047);
+  background: linear-gradient(135deg, #0E7490, #0891B2);
   color: #fff;
 }
 
 .cat-card-icon--teal {
-  background: linear-gradient(135deg, #00897B, #26A69A);
+  background: linear-gradient(135deg, #0369A1, #0284C7);
   color: #fff;
 }
 
 .cat-card-icon--indigo {
-  background: linear-gradient(135deg, #5C6BC0, #7986CB);
+  background: linear-gradient(135deg, #4F46E5, #7C3AED);
   color: #fff;
 }
 
@@ -96,7 +96,7 @@
 }
 
 .section-btn {
-  --color: #2E7D32;
+  --color: #0E7490;
   font-size: 13px;
   font-weight: 500;
   text-transform: none;

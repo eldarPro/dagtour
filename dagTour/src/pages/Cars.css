@@ -1,5 +1,5 @@
 .filter-toolbar {
-  --background: #F5F7F5;
+  --background: #F0F9FF;
   --border-width: 0;
   --padding-top: 4px;
   --padding-bottom: 4px;
@@ -11,8 +11,8 @@
 
 .filter-toolbar ion-segment-button {
   --color: #666;
-  --color-checked: #2E7D32;
-  --indicator-color: #2E7D32;
+  --color-checked: #0E7490;
+  --indicator-color: #0E7490;
   font-size: 13px;
   font-weight: 500;
   text-transform: none;
@@ -32,11 +32,11 @@
   --background-checked: #f2f2f2;
   --color: #444444;
   --color-checked: #111111;
-  --indicator-color: #2E7D32;
+  --indicator-color: #0E7490;
 }
 
 .list-content {
-  --background: #F5F7F5;
+  --background: #F0F9FF;
 }
 
 .card-list {

@@ -60,7 +60,7 @@
 
 .car-card-details ion-icon {
   font-size: 15px;
-  color: #2E7D32;
+  color: #0E7490;
 }
 
 .car-card-dot {
@@ -84,7 +84,7 @@
 }
 
 .car-card-edit-btn {
-  --color: #2E7D32;
+  --color: #0E7490;
   margin-left: auto;
   font-size: 13px;
 }

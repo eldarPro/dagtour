@@ -1,5 +1,5 @@
 .add-car-content {
-  --background: #F5F7F5;
+  --background: #F0F9FF;
 }
 
 .add-car-form-wrapper {
@@ -32,7 +32,7 @@
 }
 
 .add-car-actions ion-button:first-child {
-  --background: #2E7D32;
+  --background: #0E7490;
 }
 
 .add-car-section-label {
