@@ -97,7 +97,7 @@ const Home: React.FC = () => {
             </IonCol>
           </IonRow>
         </IonGrid>
-        <IonRow className="scroll-row">
+        <div className="scroll-row">
           {houses.slice(0, 4).map((house) => (
             <HouseCard
               key={house.id}
@@ -112,7 +112,8 @@ const Home: React.FC = () => {
               href={`/houses/${house.id}`}
             />
           ))}
-        </IonRow>
+          <div className="scroll-row-end" />
+        </div>
 
         {/* Аренда авто */}
         <IonGrid className="section-grid">
@@ -127,7 +128,7 @@ const Home: React.FC = () => {
             </IonCol>
           </IonRow>
         </IonGrid>
-        <IonRow className="scroll-row">
+        <div className="scroll-row">
           {cars.slice(0, 4).map((car) => (
             <CarCard
               key={car.id}
@@ -144,7 +145,8 @@ const Home: React.FC = () => {
               href={`/cars/${car.id}`}
             />
           ))}
-        </IonRow>
+          <div className="scroll-row-end" />
+        </div>
 
         {/* Популярные туры */}
         <IonGrid className="section-grid">
@@ -159,11 +161,12 @@ const Home: React.FC = () => {
             </IonCol>
           </IonRow>
         </IonGrid>
-        <IonRow className="scroll-row">
+        <div className="scroll-row">
           {tours.slice(0, 4).map((tour) => (
             <TourCard key={tour.id} tour={tour} />
           ))}
-        </IonRow>
+          <div className="scroll-row-end" />
+        </div>
       </IonContent>
     </IonPage>
   );

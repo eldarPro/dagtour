@@ -132,8 +132,7 @@
   display: none;
 }
 
-.scroll-row::after {
-  content: '';
+.scroll-row-end {
   min-width: 16px;
   flex-shrink: 0;
 }
