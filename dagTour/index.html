@@ -24,6 +24,18 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   </head>
   <body>
+    <div id="splash" style="
+      position: fixed;
+      inset: 0;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.3s ease;
+    ">
+      <img src="/logo.png" alt="Logo" style="width: 100%; max-width: 100%; height: auto;" />
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

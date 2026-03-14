@@ -110,7 +110,7 @@ const TourDetail: React.FC = () => {
       <IonFooter className="detail-footer">
         <IonToolbar className="detail-footer-toolbar">
           <div className="detail-price-wrap" slot="start">
-            <IonText color="primary" className="detail-price">
+            <IonText className="detail-price">
               <strong>{tour.price.toLocaleString('ru-RU')} ₽</strong>
             </IonText>
             <IonNote className="detail-per">/ чел.</IonNote>

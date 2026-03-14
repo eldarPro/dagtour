@@ -1,17 +1,17 @@
 :root {
-  --ion-color-primary: #0E7490;
-  --ion-color-primary-rgb: 14, 116, 144;
+  --ion-color-primary: #41BDD8;
+  --ion-color-primary-rgb: 65, 189, 216;
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #0C6A80;
-  --ion-color-primary-tint: #22A0C2;
+  --ion-color-primary-shade: #39A9C2;
+  --ion-color-primary-tint: #5ACADF;
 
-  --ion-color-secondary: #06B6D4;
-  --ion-color-secondary-rgb: 6, 182, 212;
+  --ion-color-secondary: #9B5DC8;
+  --ion-color-secondary-rgb: 155, 93, 200;
   --ion-color-secondary-contrast: #ffffff;
   --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #05A0BC;
-  --ion-color-secondary-tint: #22C4DE;
+  --ion-color-secondary-shade: #8A52B4;
+  --ion-color-secondary-tint: #A96DCE;
 
   --ion-color-tertiary: #67E8F9;
   --ion-color-tertiary-rgb: 103, 232, 249;
@@ -58,13 +58,13 @@
   --ion-background-color: #FFFFFF;
   --ion-background-color-rgb: 255, 255, 255;
 
-  --ion-toolbar-background: #0E7490;
+  --ion-toolbar-background: #41BDD8;
   --ion-toolbar-color: #FFFFFF;
 
   --ion-tab-bar-background: #FFFFFF;
   --ion-tab-bar-border-color: #e8e8e8;
   --ion-tab-bar-color: #aaa;
-  --ion-tab-bar-color-selected: #0E7490;
+  --ion-tab-bar-color-selected: #41BDD8;
 
   --ion-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
@@ -78,7 +78,7 @@ ion-tab-bar {
 
 ion-tab-button {
   --color: #bbb;
-  --color-selected: #0E7490;
+  --color-selected: #41BDD8;
   font-size: 10px;
 }
 
@@ -88,6 +88,7 @@ ion-tab-button ion-icon {
 
 ion-toolbar {
   --min-height: 48px;
+  --background: linear-gradient(135deg, #9B5DC8 0%, #41BDD8 100%);
 }
 
 ion-title {
