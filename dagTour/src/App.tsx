@@ -11,14 +11,14 @@ import {
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import {
-  homeOutline,
-  homeSharp,
+  gridOutline,
+  gridSharp,
   carSportOutline,
   carSportSharp,
   compassOutline,
   compassSharp,
-  bedOutline,
-  bedSharp,
+  homeOutline,
+  homeSharp,
   personCircleOutline,
   personCircleSharp,
 } from 'ionicons/icons';
@@ -122,11 +122,11 @@ const App: React.FC = () => (
         </IonRouterOutlet>
         <IonTabBar slot="bottom">
           <IonTabButton tab="home" href="/home">
-            <IonIcon aria-hidden="true" ios={homeOutline} md={homeSharp} />
+            <IonIcon aria-hidden="true" ios={gridOutline} md={gridSharp} />
             <IonLabel>Главная</IonLabel>
           </IonTabButton>
           <IonTabButton tab="houses" href="/houses">
-            <IonIcon aria-hidden="true" ios={bedOutline} md={bedSharp} />
+            <IonIcon aria-hidden="true" ios={homeOutline} md={homeSharp} />
             <IonLabel>Дома</IonLabel>
           </IonTabButton>
           <IonTabButton tab="cars" href="/cars">
