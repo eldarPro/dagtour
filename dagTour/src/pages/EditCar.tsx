@@ -38,7 +38,6 @@ const EditCar: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [location, setLocation] = useState<{ address: string; lat: number; lng: number } | null>(null);
-  const [locationKey, setLocationKey] = useState(0);
 
   // refs для актуальных значений из IonInput
   const brandRef = useRef(brand);
@@ -69,7 +68,6 @@ const EditCar: React.FC = () => {
           ? { address: found.address ?? '', lat: found.lat, lng: found.lng }
           : null
       );
-      setLocationKey((k) => k + 1);
     }
   });
 
@@ -227,16 +225,9 @@ const EditCar: React.FC = () => {
                 }}
               />
             </IonItem>
-          </IonList>
 
-          <div className="add-car-section-label">Местоположение</div>
-          <LocationPicker
-            key={locationKey}
-            initialAddress={location?.address}
-            initialLat={location?.lat}
-            initialLng={location?.lng}
-            onChange={setLocation}
-          />
+            <LocationPicker value={location} onChange={setLocation} />
+          </IonList>
 
           {error && (
             <div className="add-car-error">

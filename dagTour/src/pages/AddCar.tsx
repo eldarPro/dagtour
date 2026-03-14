@@ -130,10 +130,9 @@ const AddCar: React.FC = () => {
                 onIonChange={(e) => setDescription(e.detail.value ?? '')}
               />
             </IonItem>
-          </IonList>
 
-          <div className="add-car-section-label">Местоположение</div>
-          <LocationPicker onChange={setLocation} />
+            <LocationPicker value={location} onChange={setLocation} />
+          </IonList>
 
           {error && (
             <div className="add-car-error">
