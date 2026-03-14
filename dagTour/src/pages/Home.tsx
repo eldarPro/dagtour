@@ -31,7 +31,7 @@ const Home: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border">
         <IonToolbar>
-          <IonTitle>dagTour</IonTitle>
+          <IonTitle>Путешествия по Дагестану</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen className="home-content">
