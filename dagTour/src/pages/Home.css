@@ -36,6 +36,7 @@
   margin: -20px 16px 0;
   position: relative;
   z-index: 2;
+  width: 90%;
 }
 
 /* ── Categories ── */
@@ -107,14 +108,11 @@
 }
 
 /* ── Horizontal scroll row ── */
-.scroll-row .car-card,
-.scroll-row .house-card,
-.scroll-row .tour-card {
+.scroll-item {
   min-width: 260px;
   max-width: 260px;
   flex-shrink: 0;
   scroll-snap-align: start;
-  margin: 0 0 4px;
 }
 
 .scroll-row {
@@ -123,16 +121,17 @@
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
-  padding: 4px 0 12px 16px;
+  padding: 4px 0 12px 0;
   gap: 12px;
   scrollbar-width: none;
+  margin-left: 12px;
 }
 
 .scroll-row::-webkit-scrollbar {
   display: none;
 }
 
-.scroll-row-end {
+.scroll-row-pad {
   min-width: 16px;
   flex-shrink: 0;
 }

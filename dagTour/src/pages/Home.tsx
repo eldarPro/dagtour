@@ -98,21 +98,23 @@ const Home: React.FC = () => {
           </IonRow>
         </IonGrid>
         <div className="scroll-row">
+          <div className="scroll-row-pad" />
           {houses.slice(0, 4).map((house) => (
-            <HouseCard
-              key={house.id}
-              house={{
-                id: String(house.id),
-                name: house.name,
-                pricePerNight: house.pricePerNight,
-                photo: house.photo,
-                location: house.location,
-                rating: house.rating,
-              }}
-              href={`/houses/${house.id}`}
-            />
+            <div key={house.id} className="scroll-item">
+              <HouseCard
+                house={{
+                  id: String(house.id),
+                  name: house.name,
+                  pricePerNight: house.pricePerNight,
+                  photo: house.photo,
+                  location: house.location,
+                  rating: house.rating,
+                }}
+                href={`/houses/${house.id}`}
+              />
+            </div>
           ))}
-          <div className="scroll-row-end" />
+          <div className="scroll-row-pad" />
         </div>
 
         {/* Аренда авто */}
@@ -129,23 +131,25 @@ const Home: React.FC = () => {
           </IonRow>
         </IonGrid>
         <div className="scroll-row">
+          <div className="scroll-row-pad" />
           {cars.slice(0, 4).map((car) => (
-            <CarCard
-              key={car.id}
-              car={{
-                id: String(car.id),
-                brand: car.brand,
-                model: car.model,
-                pricePerDay: car.pricePerDay,
-                photo: car.photo,
-                type: car.type,
-                seats: car.seats,
-                transmission: car.transmission,
-              }}
-              href={`/cars/${car.id}`}
-            />
+            <div key={car.id} className="scroll-item">
+              <CarCard
+                car={{
+                  id: String(car.id),
+                  brand: car.brand,
+                  model: car.model,
+                  pricePerDay: car.pricePerDay,
+                  photo: car.photo,
+                  type: car.type,
+                  seats: car.seats,
+                  transmission: car.transmission,
+                }}
+                href={`/cars/${car.id}`}
+              />
+            </div>
           ))}
-          <div className="scroll-row-end" />
+          <div className="scroll-row-pad" />
         </div>
 
         {/* Популярные туры */}
@@ -162,10 +166,13 @@ const Home: React.FC = () => {
           </IonRow>
         </IonGrid>
         <div className="scroll-row">
+          <div className="scroll-row-pad" />
           {tours.slice(0, 4).map((tour) => (
-            <TourCard key={tour.id} tour={tour} />
+            <div key={tour.id} className="scroll-item">
+              <TourCard tour={tour} />
+            </div>
           ))}
-          <div className="scroll-row-end" />
+          <div className="scroll-row-pad" />
         </div>
       </IonContent>
     </IonPage>
