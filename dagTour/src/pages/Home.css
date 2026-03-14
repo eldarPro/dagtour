@@ -108,7 +108,8 @@
 
 /* ── Horizontal scroll row ── */
 .scroll-row .car-card,
-.scroll-row .house-card {
+.scroll-row .house-card,
+.scroll-row .tour-card {
   min-width: 260px;
   max-width: 260px;
   flex-shrink: 0;

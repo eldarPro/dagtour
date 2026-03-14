@@ -12,21 +12,16 @@ import {
   IonCol,
   IonCard,
   IonCardContent,
-  IonCardHeader,
-  IonCardSubtitle,
-  IonCardTitle,
-  IonImg,
-  IonBadge,
+  IonNote,
   IonText,
   IonButton,
-  IonNote,
   IonLabel,
 } from '@ionic/react';
-
-import { homeOutline, carOutline, mapOutline, chevronForwardOutline, timeOutline } from 'ionicons/icons';
+import { homeOutline, carOutline, mapOutline, chevronForwardOutline } from 'ionicons/icons';
 import { houses, cars, tours } from '../data/mockData';
 import CarCard from '../components/CarCard';
 import HouseCard from '../components/HouseCard';
+import TourCard from '../components/TourCard';
 import './Home.css';
 
 const Home: React.FC = () => {
@@ -166,24 +161,7 @@ const Home: React.FC = () => {
         </IonGrid>
         <div className="scroll-row">
           {tours.slice(0, 4).map((tour) => (
-            <IonCard key={tour.id} routerLink={`/tours/${tour.id}`} className="mini-card">
-              <IonImg src={tour.photo} alt={tour.name} className="mini-card-img" />
-              <IonBadge className="mini-card-badge mini-card-badge--duration">
-                <IonIcon icon={timeOutline} /> {tour.duration}
-              </IonBadge>
-              <IonCardHeader className="mini-card-header">
-                <IonCardTitle className="mini-card-title">{tour.name}</IonCardTitle>
-                <IonCardSubtitle className="mini-card-subtitle">
-                  {tour.route.slice(1, -1).join(' → ')}
-                </IonCardSubtitle>
-              </IonCardHeader>
-              <IonCardContent className="mini-card-footer">
-                <IonText color="primary">
-                  <strong>{tour.price.toLocaleString('ru-RU')} ₽</strong>
-                </IonText>
-                <IonNote> / чел.</IonNote>
-              </IonCardContent>
-            </IonCard>
+            <TourCard key={tour.id} tour={tour} />
           ))}
         </div>
 
