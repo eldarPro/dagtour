@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   IonContent,
   IonHeader,
@@ -18,7 +18,7 @@ import {
   IonLabel,
 } from '@ionic/react';
 import { homeOutline, carOutline, mapOutline, chevronForwardOutline } from 'ionicons/icons';
-import { houses, cars, tours } from '../data/mockData';
+import { getHouses, getCars, getTours, House, Car, Tour } from '../lib/api';
 import CarCard from '../components/CarCard';
 import HouseCard from '../components/HouseCard';
 import TourCard from '../components/TourCard';
@@ -26,6 +26,27 @@ import './Home.css';
 
 const Home: React.FC = () => {
   const [searchText, setSearchText] = useState('');
+  const [houses, setHouses] = useState<House[]>([]);
+  const [cars, setCars] = useState<Car[]>([]);
+  const [tours, setTours] = useState<Tour[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [housesData, carsData, toursData] = await Promise.all([
+          getHouses(),
+          getCars(),
+          getTours(),
+        ]);
+        setHouses(housesData);
+        setCars(carsData);
+        setTours(toursData);
+      } catch (error) {
+        console.error('Failed to load data:', error);
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <IonPage>

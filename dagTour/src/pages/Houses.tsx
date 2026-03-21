@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   IonContent,
   IonHeader,
@@ -12,20 +12,20 @@ import {
   IonIcon,
   IonButtons,
   IonButton,
-  useIonViewWillEnter,
+  IonSpinner,
 } from '@ionic/react';
 import { listOutline, mapOutline, optionsOutline } from 'ionicons/icons';
 import HouseCard, { HouseCardData } from '../components/HouseCard';
 import HousesMap, { MapHouseItem } from '../components/HousesMap';
 import HousesFilterModal from '../components/HousesFilterModal';
-import { houses, House } from '../data/mockData';
+import { getHouses, House } from '../lib/api';
 import { HouseFilters, DEFAULT_FILTERS, applyFilters, isFiltersActive } from '../data/houseFilters';
 import { MyHouse, loadMyHouses } from '../data/myHousesStorage';
 import './Houses.css';
 
 type ViewMode = 'list' | 'map';
 
-const mockToCardData = (h: House): HouseCardData => ({
+const houseToCardData = (h: House): HouseCardData => ({
   id: String(h.id),
   name: h.name,
   pricePerNight: h.pricePerNight,
@@ -49,11 +49,27 @@ const Houses: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [filters, setFilters] = useState<HouseFilters>(DEFAULT_FILTERS);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [houses, setHouses] = useState<House[]>([]);
   const [myHouses, setMyHouses] = useState<MyHouse[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useIonViewWillEnter(() => {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await getHouses();
+        setHouses(data);
+      } catch (error) {
+        console.error('Failed to load houses:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
     setMyHouses(loadMyHouses());
-  });
+  }, []);
 
   const filtered = applyFilters(houses, filters);
   const filteredOwn = myHouses.filter(
@@ -61,7 +77,7 @@ const Houses: React.FC = () => {
   );
   const hasActiveFilters = isFiltersActive(filters);
 
-  const mockMapItems: MapHouseItem[] = filtered.map((h) => ({
+  const mapItems: MapHouseItem[] = filtered.map((h) => ({
     id: h.id,
     name: h.name,
     pricePerNight: h.pricePerNight,
@@ -111,7 +127,11 @@ const Houses: React.FC = () => {
 
       {viewMode === 'list' ? (
         <IonContent fullscreen className="list-content">
-          {filtered.length === 0 && filteredOwn.length === 0 ? (
+          {loading ? (
+            <div className="loading-container">
+              <IonSpinner name="crescent" />
+            </div>
+          ) : filtered.length === 0 && filteredOwn.length === 0 ? (
             <div className="no-results">
               <p>Ничего не найдено</p>
               <IonButton fill="clear" onClick={() => setFilters(DEFAULT_FILTERS)}>
@@ -132,7 +152,7 @@ const Houses: React.FC = () => {
               {filtered.map((house) => (
                 <HouseCard
                   key={house.id}
-                  house={mockToCardData(house)}
+                  house={houseToCardData(house)}
                   href={`/houses/${house.id}`}
                 />
               ))}
@@ -141,7 +161,7 @@ const Houses: React.FC = () => {
         </IonContent>
       ) : (
         <IonContent fullscreen className="map-content">
-          <HousesMap houses={[...ownMapItems, ...mockMapItems]} />
+          <HousesMap houses={[...ownMapItems, ...mapItems]} />
         </IonContent>
       )}
 

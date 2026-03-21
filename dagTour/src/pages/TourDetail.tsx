@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   IonContent,
@@ -18,18 +18,58 @@ import {
   IonList,
   IonItem,
   IonFooter,
+  IonSpinner,
 } from '@ionic/react';
 import { timeOutline, navigateOutline, ellipseOutline, flagOutline, locationOutline, chevronBackOutline } from 'ionicons/icons';
-import { tours } from '../data/mockData';
+import { getTour, Tour } from '../lib/api';
 import './TourDetail.css';
 
 const TourDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const tour = tours.find((t) => t.id === Number(id));
+  const [tour, setTour] = useState<Tour | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await getTour(Number(id));
+        setTour(data);
+      } catch (error) {
+        console.error('Failed to load tour:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <IonPage>
+        <IonHeader>
+          <IonToolbar>
+            <IonButtons slot="start">
+              <IonBackButton defaultHref="/tours" text="" icon={chevronBackOutline} />
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="ion-padding loading-container">
+          <IonSpinner name="crescent" />
+        </IonContent>
+      </IonPage>
+    );
+  }
 
   if (!tour) {
     return (
       <IonPage>
+        <IonHeader>
+          <IonToolbar>
+            <IonButtons slot="start">
+              <IonBackButton defaultHref="/tours" text="" icon={chevronBackOutline} />
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
         <IonContent className="ion-padding">
           <IonText>Тур не найден</IonText>
         </IonContent>

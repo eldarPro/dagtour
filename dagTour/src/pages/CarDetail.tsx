@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   IonContent,
@@ -19,9 +19,10 @@ import {
   IonList,
   IonItem,
   IonFooter,
+  IonSpinner,
 } from '@ionic/react';
 import { peopleOutline, cogOutline, checkmarkCircleOutline, calendarOutline, chevronBackOutline } from 'ionicons/icons';
-import { cars } from '../data/mockData';
+import { getCar, Car } from '../lib/api';
 import { loadMyCars, MyCar } from '../data/myCarsStorage';
 import './CarDetail.css';
 
@@ -33,11 +34,48 @@ const TRANSMISSION_LABEL: Record<string, string> = {
 
 const CarDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const [car, setCar] = useState<Car | null>(null);
+  const [myCar, setMyCar] = useState<MyCar | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const mockCar = cars.find((c) => c.id === Number(id));
-  const myCar: MyCar | undefined = mockCar ? undefined : loadMyCars().find((c) => c.id === id);
+  useEffect(() => {
+    const fetchData = async () => {
+      const myCars = loadMyCars();
+      const foundMyCar = myCars.find((c) => c.id === id);
 
-  if (!mockCar && !myCar) {
+      if (foundMyCar) {
+        setMyCar(foundMyCar);
+      } else {
+        try {
+          const data = await getCar(Number(id));
+          setCar(data);
+        } catch (error) {
+          console.error('Failed to load car:', error);
+        }
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <IonPage>
+        <IonHeader>
+          <IonToolbar>
+            <IonButtons slot="start">
+              <IonBackButton defaultHref="/cars" text="" icon={chevronBackOutline} />
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="ion-padding loading-container">
+          <IonSpinner name="crescent" />
+        </IonContent>
+      </IonPage>
+    );
+  }
+
+  if (!car && !myCar) {
     return (
       <IonPage>
         <IonHeader>
@@ -141,11 +179,11 @@ const CarDetail: React.FC = () => {
     );
   }
 
-  const car = mockCar!;
+  const displayCar = car!;
   const conditions = [
     'Минимальный возраст водителя: 21 год',
     'Стаж вождения: от 2 лет',
-    `Залог: ${(car.pricePerDay * 3).toLocaleString('ru-RU')} ₽`,
+    `Залог: ${(displayCar.pricePerDay * 3).toLocaleString('ru-RU')} ₽`,
     'Пробег: без ограничений',
   ];
 
@@ -156,26 +194,26 @@ const CarDetail: React.FC = () => {
           <IonButtons slot="start">
             <IonBackButton defaultHref="/cars" text="" icon={chevronBackOutline} />
           </IonButtons>
-          <IonTitle>{car.brand} {car.model}</IonTitle>
+          <IonTitle>{displayCar.brand} {displayCar.model}</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
-        <IonImg src={car.photo} alt={`${car.brand} ${car.model}`} className="detail-img" />
+        <IonImg src={displayCar.photo} alt={`${displayCar.brand} ${displayCar.model}`} className="detail-img" />
         <div className="detail-body">
-          <IonBadge color="secondary" className="car-detail-type">{car.type}</IonBadge>
+          <IonBadge color="secondary" className="car-detail-type">{displayCar.type}</IonBadge>
 
           <IonText>
-            <h1 className="detail-title">{car.brand} {car.model}</h1>
+            <h1 className="detail-title">{displayCar.brand} {displayCar.model}</h1>
           </IonText>
 
           <div className="detail-chips">
             <IonChip>
               <IonIcon icon={peopleOutline} color="primary" />
-              <IonLabel>{car.seats} мест</IonLabel>
+              <IonLabel>{displayCar.seats} мест</IonLabel>
             </IonChip>
             <IonChip>
               <IonIcon icon={cogOutline} color="primary" />
-              <IonLabel>{car.transmission}</IonLabel>
+              <IonLabel>{displayCar.transmission}</IonLabel>
             </IonChip>
           </div>
 
@@ -196,7 +234,7 @@ const CarDetail: React.FC = () => {
         <IonToolbar className="detail-footer-toolbar">
           <div className="detail-price-wrap" slot="start">
             <IonText color="primary" className="detail-price">
-              <strong>{car.pricePerDay.toLocaleString('ru-RU')} ₽</strong>
+              <strong>{displayCar.pricePerDay.toLocaleString('ru-RU')} ₽</strong>
             </IonText>
             <IonNote className="detail-per">/ день</IonNote>
           </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   IonContent,
   IonHeader,
@@ -12,12 +12,12 @@ import {
   IonIcon,
   IonButtons,
   IonButton,
-  useIonViewWillEnter,
+  IonSpinner,
 } from '@ionic/react';
 import { listOutline, mapOutline, optionsOutline } from 'ionicons/icons';
 import CarCard, { CarCardData } from '../components/CarCard';
 import CarsMap, { MapCarItem } from '../components/CarsMap';
-import { cars, Car } from '../data/mockData';
+import { getCars, Car } from '../lib/api';
 import CarsFilterModal from '../components/CarsFilterModal';
 import { CarFilters, DEFAULT_FILTERS, applyFilters, isFiltersActive } from '../data/carFilters';
 import { MyCar, loadMyCars } from '../data/myCarsStorage';
@@ -31,7 +31,7 @@ const TRANSMISSION_LABEL: Record<string, string> = {
   robot: 'Робот',
 };
 
-const mockToCardData = (car: Car): CarCardData => ({
+const carToCardData = (car: Car): CarCardData => ({
   id: String(car.id),
   brand: car.brand,
   model: car.model,
@@ -55,13 +55,29 @@ const Cars: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [filters, setFilters] = useState<CarFilters>(DEFAULT_FILTERS);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [cars, setCars] = useState<Car[]>([]);
   const [myCars, setMyCars] = useState<MyCar[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useIonViewWillEnter(() => {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await getCars();
+        setCars(data);
+      } catch (error) {
+        console.error('Failed to load cars:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
     setMyCars(loadMyCars());
-  });
+  }, []);
 
-  const filteredMock = applyFilters(cars, filters);
+  const filteredCars = applyFilters(cars, filters);
 
   const filteredOwn = myCars.filter(
     (c) => c.pricePerDay >= filters.priceMin && c.pricePerDay <= filters.priceMax
@@ -69,7 +85,7 @@ const Cars: React.FC = () => {
 
   const hasActiveFilters = isFiltersActive(filters);
 
-  const mockMapItems: MapCarItem[] = filteredMock.map((c) => ({
+  const mapItems: MapCarItem[] = filteredCars.map((c) => ({
     id: c.id,
     brand: c.brand,
     model: c.model,
@@ -125,7 +141,11 @@ const Cars: React.FC = () => {
 
       {viewMode === 'list' ? (
         <IonContent fullscreen className="list-content">
-          {filteredMock.length === 0 && filteredOwn.length === 0 ? (
+          {loading ? (
+            <div className="loading-container">
+              <IonSpinner name="crescent" />
+            </div>
+          ) : filteredCars.length === 0 && filteredOwn.length === 0 ? (
             <div className="no-results">
               <p>Ничего не найдено</p>
               <IonButton fill="clear" onClick={() => setFilters(DEFAULT_FILTERS)}>
@@ -143,10 +163,10 @@ const Cars: React.FC = () => {
                   showOwnBadge
                 />
               ))}
-              {filteredMock.map((car) => (
+              {filteredCars.map((car) => (
                 <CarCard
                   key={car.id}
-                  car={mockToCardData(car)}
+                  car={carToCardData(car)}
                   href={`/cars/${car.id}`}
                 />
               ))}
@@ -155,7 +175,7 @@ const Cars: React.FC = () => {
         </IonContent>
       ) : (
         <IonContent fullscreen className="map-content">
-          <CarsMap cars={[...ownMapItems, ...mockMapItems]} />
+          <CarsMap cars={[...ownMapItems, ...mapItems]} />
         </IonContent>
       )}
 

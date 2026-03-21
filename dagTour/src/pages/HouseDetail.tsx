@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   IonContent,
@@ -17,20 +17,66 @@ import {
   IonLabel,
   IonBadge,
   IonFooter,
+  IonSpinner,
 } from '@ionic/react';
 import { locationOutline, star, bedOutline, peopleOutline, chevronBackOutline } from 'ionicons/icons';
-import { houses } from '../data/mockData';
-import { loadMyHouses } from '../data/myHousesStorage';
+import { getHouse, House } from '../lib/api';
+import { loadMyHouses, MyHouse } from '../data/myHousesStorage';
 import './HouseDetail.css';
 
 const HouseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const mockHouse = houses.find((h) => h.id === Number(id));
-  const myHouse = mockHouse ? undefined : loadMyHouses().find((h) => h.id === id);
+  const [house, setHouse] = useState<House | null>(null);
+  const [myHouse, setMyHouse] = useState<MyHouse | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!mockHouse && !myHouse) {
+  useEffect(() => {
+    const fetchData = async () => {
+      const myHouses = loadMyHouses();
+      const foundMyHouse = myHouses.find((h) => h.id === id);
+
+      if (foundMyHouse) {
+        setMyHouse(foundMyHouse);
+      } else {
+        try {
+          const data = await getHouse(Number(id));
+          setHouse(data);
+        } catch (error) {
+          console.error('Failed to load house:', error);
+        }
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, [id]);
+
+  if (loading) {
     return (
       <IonPage>
+        <IonHeader>
+          <IonToolbar>
+            <IonButtons slot="start">
+              <IonBackButton defaultHref="/houses" text="" icon={chevronBackOutline} />
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="ion-padding loading-container">
+          <IonSpinner name="crescent" />
+        </IonContent>
+      </IonPage>
+    );
+  }
+
+  if (!house && !myHouse) {
+    return (
+      <IonPage>
+        <IonHeader>
+          <IonToolbar>
+            <IonButtons slot="start">
+              <IonBackButton defaultHref="/houses" text="" icon={chevronBackOutline} />
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
         <IonContent className="ion-padding">
           <IonText>Дом не найден</IonText>
         </IonContent>
@@ -38,7 +84,7 @@ const HouseDetail: React.FC = () => {
     );
   }
 
-  const house = mockHouse ?? {
+  const displayHouse = house ?? {
     id: myHouse!.id,
     name: myHouse!.name,
     description: myHouse!.description,
@@ -57,47 +103,47 @@ const HouseDetail: React.FC = () => {
           <IonButtons slot="start">
             <IonBackButton defaultHref="/houses" text="" icon={chevronBackOutline} />
           </IonButtons>
-          <IonTitle>{house.name}</IonTitle>
+          <IonTitle>{displayHouse.name}</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
         <IonImg
-          src={house.photo ?? `https://placehold.co/400x300/2E7D32/FFFFFF?text=${encodeURIComponent(house.name)}`}
-          alt={house.name}
+          src={displayHouse.photo ?? `https://placehold.co/400x300/2E7D32/FFFFFF?text=${encodeURIComponent(displayHouse.name)}`}
+          alt={displayHouse.name}
           className="detail-img"
         />
         <div className="detail-body">
           {myHouse ? (
             <IonBadge color="success" className="detail-own-badge">Моё объявление</IonBadge>
-          ) : house.rating != null ? (
+          ) : displayHouse.rating != null ? (
             <IonChip className="detail-rating-chip">
               <IonIcon icon={star} />
-              <IonLabel>{house.rating}</IonLabel>
+              <IonLabel>{displayHouse.rating}</IonLabel>
             </IonChip>
           ) : null}
 
           <IonText>
-            <h1 className="detail-title">{house.name}</h1>
+            <h1 className="detail-title">{displayHouse.name}</h1>
           </IonText>
 
-          {house.location && (
+          {displayHouse.location && (
             <IonChip className="detail-location-chip" outline>
               <IonIcon icon={locationOutline} color="primary" />
-              <IonLabel>{house.location}</IonLabel>
+              <IonLabel>{displayHouse.location}</IonLabel>
             </IonChip>
           )}
 
           <div className="detail-chips">
-            {house.rooms != null && (
+            {displayHouse.rooms != null && (
               <IonChip>
                 <IonIcon icon={bedOutline} color="primary" />
-                <IonLabel>{house.rooms} комнат</IonLabel>
+                <IonLabel>{displayHouse.rooms} комнат</IonLabel>
               </IonChip>
             )}
-            {house.guests != null && (
+            {displayHouse.guests != null && (
               <IonChip>
                 <IonIcon icon={peopleOutline} color="primary" />
-                <IonLabel>до {house.guests} гостей</IonLabel>
+                <IonLabel>до {displayHouse.guests} гостей</IonLabel>
               </IonChip>
             )}
           </div>
@@ -106,7 +152,7 @@ const HouseDetail: React.FC = () => {
             <h2 className="detail-section-title">Описание</h2>
           </IonText>
           <IonText color="medium">
-            <p className="detail-description">{house.description}</p>
+            <p className="detail-description">{displayHouse.description}</p>
           </IonText>
         </div>
       </IonContent>
@@ -114,7 +160,7 @@ const HouseDetail: React.FC = () => {
         <IonToolbar className="detail-footer-toolbar">
           <div className="detail-price-wrap" slot="start">
             <IonText color="primary" className="detail-price">
-              <strong>{house.pricePerNight.toLocaleString('ru-RU')} ₽</strong>
+              <strong>{displayHouse.pricePerNight.toLocaleString('ru-RU')} ₽</strong>
             </IonText>
             <IonNote className="detail-per">/ ночь</IonNote>
           </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   IonContent,
   IonHeader,
@@ -9,17 +9,34 @@ import {
   IonButtons,
   IonButton,
   IonIcon,
+  IonSpinner,
 } from '@ionic/react';
 import { optionsOutline } from 'ionicons/icons';
 import TourCard from '../components/TourCard';
 import ToursFilterModal from '../components/ToursFilterModal';
-import { tours } from '../data/mockData';
+import { getTours, Tour } from '../lib/api';
 import { TourFilters, DEFAULT_FILTERS, applyFilters, isFiltersActive } from '../data/tourFilters';
 import './Tours.css';
 
 const Tours: React.FC = () => {
   const [filters, setFilters] = useState<TourFilters>(DEFAULT_FILTERS);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [tours, setTours] = useState<Tour[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await getTours();
+        setTours(data);
+      } catch (error) {
+        console.error('Failed to load tours:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const filtered = applyFilters(tours, filters);
   const hasActiveFilters = isFiltersActive(filters);
@@ -38,7 +55,11 @@ const Tours: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen className="list-content">
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="loading-container">
+            <IonSpinner name="crescent" />
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="no-results">
             <p>Ничего не найдено</p>
             <IonButton fill="clear" onClick={() => setFilters(DEFAULT_FILTERS)}>

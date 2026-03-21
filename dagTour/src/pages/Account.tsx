@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   IonPage,
   IonHeader,
@@ -14,166 +14,164 @@ import {
   IonButton,
   IonText,
   IonIcon,
+  IonSpinner,
 } from '@ionic/react';
-import { pencilSharp } from 'ionicons/icons';
+import { pencilSharp, mailOutline, lockClosedOutline, personOutline, callOutline } from 'ionicons/icons';
+import { useAuth } from '../lib/auth';
+import { supabase } from '../lib/supabase';
 import './Account.css';
 
 type Mode = 'login' | 'register';
 
-interface User {
-  name: string;
-  phone: string;
+interface Profile {
+  full_name: string | null;
+  phone: string | null;
+  email: string | null;
 }
 
-const STORAGE_KEY = 'dagtour_user';
-
-/** Моковые данные для входа (только для разработки). Телефон: +7 900 123-45-67, код: 1234 */
-const MOCK_AUTH = {
-  phone: '79001234567',
-  code: '1234',
-  name: 'Тестовый пользователь',
-};
-
-const loadUser = (): User | null => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as User) : null;
-  } catch {
-    return null;
-  }
-};
-
-const saveUser = (user: User | null) => {
-  try {
-    if (user) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
-    }
-  } catch {
-    // ignore
-  }
-};
-
 const Account: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const { user, loading: authLoading, signUp, signIn, signOut } = useAuth();
 
   const [mode, setMode] = useState<Mode>('login');
-  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [code, setCode] = useState('');
-  const [codeRequested, setCodeRequested] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
 
-  useEffect(() => {
-    setUser(loadUser());
-  }, []);
+  // Загрузка профиля при авторизации
+  React.useEffect(() => {
+    if (user) {
+      loadProfile();
+    } else {
+      setProfile(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  const loadProfile = async () => {
+    if (!user) return;
+    setLoadingProfile(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, phone, email')
+        .eq('id', user.id)
+        .single();
+
+      if (!error && data) {
+        setProfile(data);
+      }
+    } catch (err) {
+      console.error('Failed to load profile:', err);
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
 
   const resetForm = () => {
-    setPhone('');
+    setEmail('');
+    setPassword('');
     setName('');
-    setCode('');
-    setCodeRequested(false);
     setError(null);
   };
 
-  const handleLogout = () => {
-    saveUser(null);
-    setUser(null);
+  const handleLogout = async () => {
+    await signOut();
     resetForm();
     setEditingProfile(false);
   };
 
-  const handleRequestCode = () => {
+  const handleSubmit = async () => {
     setError(null);
-    const cleanPhone = phone.replace(/\D/g, '');
-    if (cleanPhone.length < 10) {
-      setError('Введите корректный номер телефона');
-      return;
-    }
-    setCodeRequested(true);
-  };
 
-  const handleSubmitLogin = () => {
-    setError(null);
-    if (!code || code.trim().length < 4) {
-      setError('Введите код из SMS');
-      return;
-    }
-    const cleanPhone = phone.replace(/\D/g, '');
-    const trimmedCode = code.trim();
-
-    if (cleanPhone === MOCK_AUTH.phone) {
-      if (trimmedCode !== MOCK_AUTH.code) {
-        setError('Неверный код');
-        return;
-      }
-      const newUser: User = { name: MOCK_AUTH.name, phone: cleanPhone };
-      saveUser(newUser);
-      setUser(newUser);
-      resetForm();
+    if (!email.trim()) {
+      setError('Введите email');
       return;
     }
 
-    const newUser: User = { name: 'Гость', phone: cleanPhone };
-    saveUser(newUser);
-    setUser(newUser);
-    resetForm();
-  };
+    if (!password.trim() || password.length < 6) {
+      setError('Пароль должен содержать минимум 6 символов');
+      return;
+    }
 
-  const handleSubmitRegister = () => {
-    setError(null);
-    if (!name.trim()) {
+    if (mode === 'register' && !name.trim()) {
       setError('Введите имя');
       return;
     }
-    const cleanPhone = phone.replace(/\D/g, '');
-    if (cleanPhone.length < 10) {
-      setError('Введите корректный номер телефона');
-      return;
+
+    setSubmitting(true);
+
+    try {
+      if (mode === 'login') {
+        const result = await signIn(email.trim(), password);
+        if (result.error) {
+          setError(result.error);
+        } else {
+          resetForm();
+        }
+      } else {
+        const result = await signUp(email.trim(), password, name.trim());
+        if (result.error) {
+          setError(result.error);
+        } else {
+          setError(null);
+          alert('Регистрация успешна! Проверьте email для подтверждения.');
+          resetForm();
+          setMode('login');
+        }
+      }
+    } finally {
+      setSubmitting(false);
     }
-    if (!code || code.trim().length < 4) {
-      setError('Введите код из SMS');
-      return;
-    }
-    const newUser: User = {
-      name: name.trim(),
-      phone: cleanPhone,
-    };
-    saveUser(newUser);
-    setUser(newUser);
-    resetForm();
   };
 
   const startEditProfile = () => {
-    if (!user) return;
-    setEditName(user.name);
-    setEditPhone(user.phone);
+    if (!profile) return;
+    setEditName(profile.full_name || '');
+    setEditPhone(profile.phone || '');
     setError(null);
     setEditingProfile(true);
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     if (!user) return;
+
     const nextName = editName.trim();
     const cleanPhone = editPhone.replace(/\D/g, '');
+
     if (!nextName) {
       setError('Введите имя');
       return;
     }
-    if (cleanPhone.length < 10) {
-      setError('Введите корректный номер телефона');
-      return;
+
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: nextName,
+          phone: cleanPhone || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        setError('Ошибка при сохранении');
+      } else {
+        setProfile((prev) => prev ? { ...prev, full_name: nextName, phone: cleanPhone || null } : null);
+        setEditingProfile(false);
+        setError(null);
+      }
+    } finally {
+      setSubmitting(false);
     }
-    const updated: User = { name: nextName, phone: cleanPhone };
-    saveUser(updated);
-    setUser(updated);
-    setEditingProfile(false);
-    setError(null);
   };
 
   const cancelEditProfile = () => {
@@ -183,18 +181,18 @@ const Account: React.FC = () => {
 
   const renderAuthForm = () => (
     <div className="account-auth">
-      <p className="account-mock-hint">
-        Для теста: телефон <strong>+7 900 123-45-67</strong>, код <strong>1234</strong>
-      </p>
+      <div className="account-auth-header">
+        <IonIcon icon={personOutline} className="account-auth-icon" />
+        <h2>Добро пожаловать</h2>
+        <p>Войдите или зарегистрируйтесь</p>
+      </div>
+
       <IonSegment
         mode="md"
         value={mode}
         onIonChange={(e) => {
-          const value = e.detail.value as Mode;
-          setMode(value);
+          setMode(e.detail.value as Mode);
           setError(null);
-          setCode('');
-          setCodeRequested(false);
         }}
       >
         <IonSegmentButton value="login">
@@ -208,70 +206,40 @@ const Account: React.FC = () => {
       <IonList className="account-form">
         {mode === 'register' && (
           <IonItem>
-            <IonLabel position="stacked">Имя</IonLabel>
+            <IonIcon icon={personOutline} slot="start" color="medium" />
             <IonInput
               value={name}
               placeholder="Ваше имя"
-              onIonChange={(e) => setName(e.detail.value ?? '')}
+              onIonInput={(e) => setName(e.detail.value ?? '')}
             />
           </IonItem>
         )}
 
         <IonItem>
-          <IonLabel position="stacked">Номер телефона</IonLabel>
+          <IonIcon icon={mailOutline} slot="start" color="medium" />
           <IonInput
-            type="tel"
-            inputmode="tel"
-            placeholder="+7 ..."
-            value={phone}
-            onIonChange={(e) => setPhone(e.detail.value ?? '')}
+            type="email"
+            placeholder="Email"
+            value={email}
+            onIonInput={(e) => setEmail(e.detail.value ?? '')}
           />
         </IonItem>
 
-        {!codeRequested && (
-          <div className="account-actions">
-            <IonButton expand="block" onClick={handleRequestCode}>
-              Получить код
-            </IonButton>
-          </div>
-        )}
+        <IonItem>
+          <IonIcon icon={lockClosedOutline} slot="start" color="medium" />
+          <IonInput
+            type="password"
+            placeholder="Пароль"
+            value={password}
+            onIonInput={(e) => setPassword(e.detail.value ?? '')}
+          />
+        </IonItem>
 
-        {codeRequested && (
-          <>
-            <IonItem>
-              <IonLabel position="stacked">Код из SMS</IonLabel>
-              <IonInput
-                type="tel"
-                inputmode="numeric"
-                maxlength={6}
-                placeholder="Введите код"
-                value={code}
-                onIonChange={(e) => setCode(e.detail.value ?? '')}
-              />
-            </IonItem>
-            <div className="account-actions">
-              {mode === 'login' ? (
-                <IonButton expand="block" onClick={handleSubmitLogin}>
-                  Войти
-                </IonButton>
-              ) : (
-                <IonButton expand="block" onClick={handleSubmitRegister}>
-                  Зарегистрироваться
-                </IonButton>
-              )}
-              <IonButton
-                fill="clear"
-                size="small"
-                onClick={() => {
-                  setCode('');
-                  setCodeRequested(false);
-                }}
-              >
-                Изменить номер телефона
-              </IonButton>
-            </div>
-          </>
-        )}
+        <div className="account-actions">
+          <IonButton expand="block" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? <IonSpinner name="crescent" /> : mode === 'login' ? 'Войти' : 'Зарегистрироваться'}
+          </IonButton>
+        </div>
 
         {error && (
           <div className="account-error">
@@ -282,80 +250,106 @@ const Account: React.FC = () => {
     </div>
   );
 
-  const renderProfile = () => (
-    <div className="account-profile">
-      <div className="account-profile-header">
-        <div className="account-avatar">
-          {user?.name?.[0]?.toUpperCase() ?? 'U'}
-        </div>
-        <div className="account-profile-info">
-          <h2>{user?.name || 'Пользователь'}</h2>
-          <p>{user?.phone}</p>
-        </div>
-        <button
-          type="button"
-          className="account-edit-btn"
-          onClick={startEditProfile}
-        >
-          <IonIcon icon={pencilSharp} />
-        </button>
-      </div>
+  const renderProfile = () => {
+    const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Пользователь';
+    const displayEmail = profile?.email || user?.email || '';
 
-      {editingProfile && (
-        <IonList className="account-edit-form">
-          <IonItem>
-            <IonLabel position="stacked">Имя</IonLabel>
-            <IonInput
-              value={editName}
-              placeholder="Ваше имя"
-              onIonChange={(e) => setEditName(e.detail.value ?? '')}
-            />
-          </IonItem>
-          <IonItem>
-            <IonLabel position="stacked">Номер телефона</IonLabel>
-            <IonInput
-              type="tel"
-              inputmode="tel"
-              value={editPhone}
-              placeholder="+7 ..."
-              onIonChange={(e) => setEditPhone(e.detail.value ?? '')}
-            />
-          </IonItem>
-          <div className="account-actions account-actions--profile">
-            <IonButton expand="block" onClick={handleSaveProfile}>
-              Сохранить
-            </IonButton>
-            <IonButton expand="block" fill="outline" onClick={cancelEditProfile}>
-              Отмена
-            </IonButton>
+    return (
+      <div className="account-profile">
+        <div className="account-profile-header">
+          <div className="account-avatar">
+            {displayName?.[0]?.toUpperCase() ?? 'U'}
           </div>
-        </IonList>
-      )}
-
-      {error && !codeRequested && (
-        <div className="account-error">
-          <IonText color="danger">{error}</IonText>
+          <div className="account-profile-info">
+            <h2>{displayName}</h2>
+            <p>{displayEmail}</p>
+            {profile?.phone && <p className="account-phone">{profile.phone}</p>}
+          </div>
+          <button
+            type="button"
+            className="account-edit-btn"
+            onClick={startEditProfile}
+          >
+            <IonIcon icon={pencilSharp} />
+          </button>
         </div>
-      )}
 
-      <IonList className="account-menu">
-        <IonItem button detail={true} routerLink="/my-cars">
-          <IonLabel>Мои авто</IonLabel>
-        </IonItem>
-        <IonItem button detail={true} routerLink="/my-houses">
-          <IonLabel>Мои дома</IonLabel>
-        </IonItem>
-        <IonItem button detail={true}>
-          <IonLabel>Избранное</IonLabel>
-        </IonItem>
-        <IonItem lines="none" className="account-logout-item">
-          <IonButton expand="block" fill="outline" color="danger" onClick={handleLogout}>
-            Выйти из аккаунта
-          </IonButton>
-        </IonItem>
-      </IonList>
-    </div>
-  );
+        {loadingProfile && (
+          <div className="account-loading">
+            <IonSpinner name="crescent" />
+          </div>
+        )}
+
+        {editingProfile && (
+          <IonList className="account-edit-form">
+            <IonItem>
+              <IonIcon icon={personOutline} slot="start" color="medium" />
+              <IonInput
+                value={editName}
+                placeholder="Ваше имя"
+                onIonInput={(e) => setEditName(e.detail.value ?? '')}
+              />
+            </IonItem>
+            <IonItem>
+              <IonIcon icon={callOutline} slot="start" color="medium" />
+              <IonInput
+                type="tel"
+                placeholder="Телефон"
+                value={editPhone}
+                onIonInput={(e) => setEditPhone(e.detail.value ?? '')}
+              />
+            </IonItem>
+            <div className="account-actions account-actions--profile">
+              <IonButton expand="block" onClick={handleSaveProfile} disabled={submitting}>
+                {submitting ? <IonSpinner name="crescent" /> : 'Сохранить'}
+              </IonButton>
+              <IonButton expand="block" fill="outline" onClick={cancelEditProfile}>
+                Отмена
+              </IonButton>
+            </div>
+          </IonList>
+        )}
+
+        {error && !editingProfile && (
+          <div className="account-error">
+            <IonText color="danger">{error}</IonText>
+          </div>
+        )}
+
+        <IonList className="account-menu">
+          <IonItem button detail={true} routerLink="/my-cars">
+            <IonLabel>Мои авто</IonLabel>
+          </IonItem>
+          <IonItem button detail={true} routerLink="/my-houses">
+            <IonLabel>Мои дома</IonLabel>
+          </IonItem>
+          <IonItem button detail={true}>
+            <IonLabel>Избранное</IonLabel>
+          </IonItem>
+          <IonItem lines="none" className="account-logout-item">
+            <IonButton expand="block" fill="outline" color="danger" onClick={handleLogout}>
+              Выйти из аккаунта
+            </IonButton>
+          </IonItem>
+        </IonList>
+      </div>
+    );
+  };
+
+  if (authLoading) {
+    return (
+      <IonPage>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Личный кабинет</IonTitle>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="account-loading">
+          <IonSpinner name="crescent" />
+        </IonContent>
+      </IonPage>
+    );
+  }
 
   return (
     <IonPage>

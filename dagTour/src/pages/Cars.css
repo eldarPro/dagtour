@@ -48,3 +48,48 @@
   --background: #fff;
   position: relative;
 }
+
+.filter-icon-btn {
+  position: relative;
+  --color: #0E7490;
+  font-size: 22px;
+}
+
+.filter-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #E53935;
+  border: 1.5px solid #fff;
+}
+
+.no-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60%;
+  color: #888;
+  font-size: 15px;
+  gap: 8px;
+}
+
+.no-results p {
+  margin: 0;
+}
+
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60%;
+}
+
+.loading-container ion-spinner {
+  --color: #0E7490;
+  width: 48px;
+  height: 48px;
+}
