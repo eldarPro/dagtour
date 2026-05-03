@@ -65,6 +65,20 @@
   padding: 12px 0 0;
 }
 
+.account-success {
+  padding: 12px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #10B981;
+}
+
+.account-success ion-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .account-loading {
   display: flex;
   align-items: center;

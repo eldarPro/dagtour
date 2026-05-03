@@ -113,12 +113,36 @@ CREATE POLICY "Users can insert own houses" ON user_houses FOR INSERT WITH CHECK
 CREATE POLICY "Users can update own houses" ON user_houses FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own houses" ON user_houses FOR DELETE USING (auth.uid() = user_id);
 
+-- OTP коды для авторизации по телефону
+CREATE TABLE IF NOT EXISTS otp_codes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  phone TEXT NOT NULL,
+  code INTEGER NOT NULL,
+  context TEXT NOT NULL DEFAULT 'auth',
+  used BOOLEAN DEFAULT FALSE,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Включить RLS для otp_codes
+ALTER TABLE otp_codes ENABLE ROW LEVEL SECURITY;
+
+-- Политики для otp_codes (публичный доступ для создания и проверки)
+CREATE POLICY "Allow insert otp_codes" ON otp_codes FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow select otp_codes" ON otp_codes FOR SELECT USING (true);
+CREATE POLICY "Allow update otp_codes" ON otp_codes FOR UPDATE USING (true);
+
 -- Триггер для создания профиля при регистрации
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email, full_name)
-  VALUES (NEW.id, NEW.email, NEW.raw_user_meta_data->>'full_name');
+  INSERT INTO public.profiles (id, email, full_name, phone)
+  VALUES (
+    NEW.id, 
+    NEW.email, 
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'phone'),
+    NEW.raw_user_meta_data->>'phone'
+  );
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -127,3 +151,22 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Функция для получения следующего номера пользователя
+CREATE OR REPLACE FUNCTION public.get_next_user_number()
+RETURNS INTEGER AS $$
+DECLARE
+  next_number INTEGER;
+BEGIN
+  -- Пытаемся получить максимальный номер из существующих имен
+  SELECT COALESCE(MAX(
+    CAST(
+      SUBSTRING(full_name FROM 'User #(\d+)$') AS INTEGER
+    )
+  ), 0) + 1 INTO next_number
+  FROM profiles
+  WHERE full_name LIKE 'User #%';
+  
+  RETURN next_number;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
