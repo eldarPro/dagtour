@@ -1,0 +1,117 @@
+.add-tour-content {
+  --background: #F0F9FF;
+}
+
+.add-tour-form-wrapper {
+  padding: 16px;
+}
+
+.add-tour-form {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.add-tour-form ion-label {
+  --color: #6b7280 !important;
+}
+
+.add-tour-required {
+  color: #d32f2f;
+}
+
+.add-tour-error {
+  padding: 12px 4px 0;
+}
+
+.add-tour-actions {
+  padding: 20px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.add-tour-actions ion-button {
+  --border-radius: 12px;
+}
+
+.add-tour-actions ion-button:first-child {
+  --background: #0E7490;
+}
+
+.add-tour-section-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  padding: 16px 4px 4px 4px;
+}
+
+/* RouteTagInput */
+.route-tag-input-item {
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid var(--ion-color-light, #f4f4f4);
+  background: #fff;
+}
+
+.route-tag-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.route-tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.route-chip {
+  --background: #e0f2fe;
+  --color: #0369a1;
+  height: 28px;
+  margin: 0;
+}
+
+.route-chip ion-icon {
+  color: #0369a1;
+  font-size: 16px;
+}
+
+.route-tag-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.route-tag-native-input {
+  flex: 1;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+  background: #f9fafb;
+  font-size: 14px;
+  color: var(--ion-text-color, #333);
+  padding: 8px 10px;
+}
+
+.route-tag-native-input::placeholder {
+  color: #aab;
+}
+
+.route-tag-add-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: #0E7490;
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}

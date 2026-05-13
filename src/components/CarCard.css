@@ -1,0 +1,85 @@
+.car-card {
+  --background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+  margin: 0 0 16px;
+  overflow: hidden;
+}
+
+.car-card-img {
+  width: 100%;
+  height: 180px;
+}
+
+.car-card-img::part(image) {
+  object-fit: cover;
+  height: 100%;
+}
+
+.car-card ion-card-header {
+  padding: 12px 16px 4px;
+}
+
+.car-card--own {
+  border: 2px solid #16A34A;
+  box-shadow: 0 2px 16px rgba(22, 163, 74, 0.18);
+}
+
+.car-card-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.car-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.car-card-chip {
+  --background: #F0F9FF;
+  --color: #555;
+  font-size: 12px;
+  height: 28px;
+}
+
+.car-card-chip ion-icon {
+  font-size: 14px;
+  color: #0E7490;
+}
+
+.car-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.car-card-price {
+  font-size: 18px;
+}
+
+.car-card-per {
+  font-size: 13px;
+}
+
+.car-card-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.car-card-edit-btn {
+  --color: #0E7490;
+}
+
+.car-card-edit-btn ion-icon {
+  font-size: 26px;
+}
+
+.car-card-actions .bookmark-btn {
+  margin-left: 0;
+}

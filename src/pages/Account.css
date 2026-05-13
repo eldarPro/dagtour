@@ -1,0 +1,271 @@
+.account-content {
+  --background: #F0F9FF;
+}
+
+.account-auth {
+  padding: 16px;
+}
+
+.account-auth-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.account-auth-header h2 {
+  margin: 12px 0 4px;
+  font-size: 22px;
+  color: #111;
+}
+
+.account-auth-header p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.account-auth-icon {
+  font-size: 48px;
+  color: #0E7490;
+}
+
+.account-mock-hint {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  background: #ECFEFF;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #0E7490;
+}
+
+.account-auth ion-segment {
+  margin-bottom: 16px;
+}
+
+.account-form {
+  background: transparent;
+}
+
+.account-form ion-item {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+}
+
+.account-form ion-item ion-icon {
+  margin-right: 12px;
+}
+
+.account-phone-input {
+  padding: 8px 0 0;
+}
+
+.account-code-sent {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 0;
+  font-size: 14px;
+}
+
+.account-code-sent ion-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.account-call-instruction {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: #e8f4fd;
+  border-radius: 12px;
+  margin: 8px 0;
+}
+
+.account-call-instruction ion-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.account-call-instruction p {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: #333;
+}
+
+.account-zvonok-number {
+  font-size: 22px !important;
+  font-weight: 700;
+  color: #1a73e8 !important;
+  letter-spacing: 1px;
+}
+
+.account-waiting {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.account-actions {
+  padding: 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-error {
+  padding: 12px 0 0;
+}
+
+.account-success {
+  padding: 12px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #10B981;
+}
+
+.account-success ion-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.account-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+}
+
+.account-loading ion-spinner {
+  --color: #0E7490;
+  width: 48px;
+  height: 48px;
+}
+
+.account-profile {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.account-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.account-profile-header {
+  justify-content: space-between;
+}
+
+.account-profile-info {
+  flex: 1;
+}
+
+.account-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #0E7490;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 20px;
+}
+
+.account-profile-info h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.account-profile-info p {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.account-phone {
+  font-size: 13px !important;
+}
+
+.account-edit-btn {
+  border: none;
+  background: transparent;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0E7490;
+  font-size: 20px;
+}
+
+.account-edit-btn ion-icon {
+  font-size: 26px;
+}
+
+.account-edit-form {
+  margin-top: 4px;
+}
+
+.account-edit-form ion-item {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+}
+
+.account-edit-form ion-item ion-icon {
+  margin-right: 12px;
+}
+
+.account-actions--profile {
+  padding-top: 12px;
+}
+
+.account-menu {
+  margin-top: 16px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --background: #ffffff;
+  background: #ffffff;
+}
+
+.account-menu ion-item {
+  --background: #ffffff;
+  --padding-start: 16px;
+  --inner-padding-end: 16px;
+  --min-height: 54px;
+  --border-color: #f0f0f0;
+}
+
+.account-menu-icon {
+  font-size: 20px;
+  color: #0E7490;
+  margin-right: 12px;
+}
+
+.account-logout-item {
+  margin-top: auto;
+  padding-top: 24px;
+  padding-bottom: 16px;
+}
+
+.account-logout-item ion-button {
+  --background: #ffffff;
+  --background-activated: #fff5f5;
+  --background-hover: #fff5f5;
+}
+

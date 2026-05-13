@@ -1,0 +1,81 @@
+.tour-card {
+  --background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+  margin: 0 0 16px;
+  overflow: hidden;
+}
+
+.tour-card-img {
+  width: 100%;
+  height: 180px;
+}
+
+.tour-card-img::part(image) {
+  object-fit: cover;
+  height: 100%;
+}
+
+.tour-card ion-card-header {
+  padding: 12px 16px 4px;
+}
+
+.tour-card-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.tour-card-desc {
+  font-size: 13px;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.tour-card-chips {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.tour-card-chip {
+  --background: #F0F9FF;
+  --color: #555;
+  font-size: 12px;
+  height: 28px;
+}
+
+.tour-card-chip ion-icon {
+  font-size: 14px;
+  color: #5C6BC0;
+}
+
+.tour-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.tour-card-price {
+  font-size: 18px;
+}
+
+.tour-card-per {
+  font-size: 13px;
+}
+
+.tour-card-actions {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  gap: 12px;
+}
+
+.tour-card-actions .bookmark-btn {
+  margin-left: 0;
+}
+
+.tour-card--own {
+  border: 2px solid #0E7490;
+}

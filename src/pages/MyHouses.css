@@ -1,0 +1,41 @@
+.my-houses-content {
+  --background: var(--ion-color-light);
+}
+
+.my-houses-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 32px;
+  text-align: center;
+  color: var(--ion-color-medium);
+}
+
+.my-houses-empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.4;
+}
+
+.my-houses-empty h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--ion-text-color);
+}
+
+.my-houses-empty p {
+  font-size: 14px;
+  margin: 0 0 24px;
+}
+
+.my-houses-add-btn {
+  width: 100%;
+  max-width: 280px;
+}
+
+.my-houses-list {
+  padding: 8px;
+  background: transparent;
+}

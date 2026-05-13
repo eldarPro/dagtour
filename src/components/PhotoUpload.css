@@ -1,0 +1,69 @@
+.photo-upload {
+  padding: 12px 16px 4px;
+}
+
+.photo-upload-label {
+  font-size: 13px;
+  color: var(--ion-color-medium);
+  margin: 0 0 10px;
+}
+
+.photo-upload-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.photo-upload-thumb {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.photo-upload-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-upload-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: white;
+  font-size: 22px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));
+}
+
+.photo-upload-add {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  border: 2px dashed var(--ion-color-medium);
+  background: var(--ion-color-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ion-color-medium);
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.photo-upload-add:disabled {
+  opacity: 0.5;
+}
+
+.photo-upload-error {
+  font-size: 13px;
+  margin: 6px 0 0;
+}

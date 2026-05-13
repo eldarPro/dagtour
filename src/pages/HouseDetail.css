@@ -1,0 +1,100 @@
+
+.detail-body {
+  padding: 20px;
+  margin-top: -24px;
+  background: var(--ion-background-color, #fff);
+  border-radius: 24px 24px 0 0;
+  position: relative;
+  z-index: 1;
+}
+
+.detail-own-badge {
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  display: inline-flex;
+  margin-bottom: 4px;
+}
+
+.detail-rating-chip {
+  --background: #FFF8E1;
+  --color: #F9A825;
+  font-weight: 600;
+}
+
+.detail-rating-chip ion-icon {
+  color: #F9A825;
+}
+
+.detail-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 8px 0;
+}
+
+.detail-location-chip {
+  --border-color: #ddd;
+  margin: 0 0 12px;
+}
+
+.detail-chips {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.detail-chips ion-chip {
+  --background: #F0F9FF;
+  --color: #444;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.detail-section-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+
+.detail-description {
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 0 0 24px;
+}
+
+/* ── Footer ── */
+.detail-footer {
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.detail-footer-toolbar {
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --min-height: 64px;
+}
+
+.detail-price-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.detail-price {
+  font-size: 22px;
+}
+
+.detail-per {
+  font-size: 14px;
+}
+
+.detail-book-btn {
+  --border-radius: 14px;
+  --padding-start: 20px;
+  --padding-end: 20px;
+  --color: #ffffff;
+  --border-color: #ffffff;
+  font-weight: 600;
+  font-size: 14px;
+  height: 44px;
+}

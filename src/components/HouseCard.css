@@ -1,0 +1,106 @@
+.house-card {
+  --background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+  margin: 0 0 16px;
+  overflow: hidden;
+}
+
+.house-card-img {
+  width: 100%;
+  height: 180px;
+}
+
+.house-card-img::part(image) {
+  object-fit: cover;
+  height: 100%;
+}
+
+.house-card ion-card-header {
+  padding: 12px 16px 4px;
+}
+
+.house-card--own {
+  border: 2px solid #16A34A;
+  box-shadow: 0 2px 16px rgba(22, 163, 74, 0.18);
+}
+
+.house-card-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.house-card-location {
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.house-card-location ion-icon {
+  font-size: 14px;
+}
+
+.house-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.house-card-chip {
+  --background: #F0F9FF;
+  --color: #555;
+  font-size: 12px;
+  height: 28px;
+}
+
+.house-card-chip ion-icon {
+  font-size: 14px;
+  color: #0E7490;
+}
+
+.house-card-chip--rating {
+  --background: #FFF8E1;
+  --color: #555;
+}
+
+.house-card-chip--rating ion-icon {
+  color: #F9A825;
+}
+
+.house-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.house-card-price {
+  font-size: 18px;
+}
+
+.house-card-per {
+  font-size: 13px;
+}
+
+.house-card-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.house-card-edit-btn {
+  --color: #0E7490;
+}
+
+.house-card-edit-btn ion-icon {
+  font-size: 26px;
+}
+
+.house-card-actions .bookmark-btn {
+  margin-left: 0;
+}

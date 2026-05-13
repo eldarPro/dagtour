@@ -1,0 +1,228 @@
+import React, { useState, useEffect } from 'react';
+import {
+  IonContent,
+  IonHeader,
+  IonPage,
+  IonTitle,
+  IonToolbar,
+  IonSearchbar,
+  IonIcon,
+  IonGrid,
+  IonRow,
+  IonCol,
+  IonCard,
+  IonCardContent,
+  IonNote,
+  IonText,
+  IonButton,
+  IonLabel,
+} from '@ionic/react';
+import { homeOutline, carOutline, mapOutline, chevronForwardOutline } from 'ionicons/icons';
+import { getHouses, getCars, getTours, House, Car, Tour } from '../lib/api';
+import { useAuth } from '../lib/auth';
+import CarCard from '../components/CarCard';
+import HouseCard from '../components/HouseCard';
+import TourCard from '../components/TourCard';
+import { HouseCardSkeleton, CarCardSkeleton, TourCardSkeleton } from '../components/CardSkeletons';
+import './Home.css';
+
+const Home: React.FC = () => {
+  const { user } = useAuth();
+  const [searchText, setSearchText] = useState('');
+  const [houses, setHouses] = useState<House[]>([]);
+  const [cars, setCars] = useState<Car[]>([]);
+  const [tours, setTours] = useState<Tour[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [housesData, carsData, toursData] = await Promise.all([
+          getHouses(),
+          getCars(),
+          getTours(),
+        ]);
+        setHouses(housesData);
+        setCars(carsData);
+        setTours(toursData);
+      } catch (error) {
+        console.error('Failed to load data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  return (
+    <IonPage>
+      <IonHeader className="ion-no-border">
+        <IonToolbar>
+          <IonTitle>Путешествия по Дагестану</IonTitle>
+        </IonToolbar>
+      </IonHeader>
+      <IonContent fullscreen className="home-content">
+
+        <IonCard className="home-banner">
+          <IonCardContent>
+            <IonText color="light">
+              <h1 className="home-banner-title">Откройте Дагестан</h1>
+              <p className="home-banner-subtitle">Горы, море, древние города и гостеприимство</p>
+            </IonText>
+          </IonCardContent>
+        </IonCard>
+
+        <IonSearchbar
+          value={searchText}
+          onIonInput={(e) => setSearchText(e.detail.value ?? '')}
+          placeholder="Куда вы хотите поехать?"
+          className="home-searchbar"
+        />
+
+        <IonGrid className="categories-grid">
+          <IonRow>
+            <IonCol size="4">
+              <IonCard routerLink="/houses" className="cat-card" button>
+                <IonCardContent className="cat-card-content">
+                  <IonIcon icon={homeOutline} className="cat-card-icon cat-card-icon--green" />
+                  <IonLabel><strong>Дома</strong></IonLabel>
+                  <IonNote>{loading ? '—' : houses.length}</IonNote>
+                </IonCardContent>
+              </IonCard>
+            </IonCol>
+            <IonCol size="4">
+              <IonCard routerLink="/cars" className="cat-card" button>
+                <IonCardContent className="cat-card-content">
+                  <IonIcon icon={carOutline} className="cat-card-icon cat-card-icon--teal" />
+                  <IonLabel><strong>Авто</strong></IonLabel>
+                  <IonNote>{loading ? '—' : cars.length}</IonNote>
+                </IonCardContent>
+              </IonCard>
+            </IonCol>
+            <IonCol size="4">
+              <IonCard routerLink="/tours" className="cat-card" button>
+                <IonCardContent className="cat-card-content">
+                  <IonIcon icon={mapOutline} className="cat-card-icon cat-card-icon--indigo" />
+                  <IonLabel><strong>Туры</strong></IonLabel>
+                  <IonNote>{loading ? '—' : tours.length}</IonNote>
+                </IonCardContent>
+              </IonCard>
+            </IonCol>
+          </IonRow>
+        </IonGrid>
+
+        {/* Аренда дома */}
+        <IonGrid className="section-grid">
+          <IonRow className="ion-align-items-center ion-justify-content-between">
+            <IonCol size="auto">
+              <IonText><strong>Аренда домов</strong></IonText>
+            </IonCol>
+            <IonCol size="auto">
+              <IonButton fill="clear" size="small" routerLink="/houses" className="section-btn">
+                Все <IonIcon icon={chevronForwardOutline} slot="end" />
+              </IonButton>
+            </IonCol>
+          </IonRow>
+        </IonGrid>
+        <div className="scroll-row">
+          <div className="scroll-row-pad" />
+          {loading
+            ? Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="scroll-item"><HouseCardSkeleton /></div>
+              ))
+            : houses.slice(0, 4).map((house) => {
+                const isOwn = !!user && house.userId === user.id;
+                return (
+                  <div key={house.id} className="scroll-item">
+                    <HouseCard
+                      house={{
+                        id: String(house.id),
+                        name: house.name,
+                        pricePerNight: house.pricePerNight,
+                        photo: house.photo,
+                        location: house.location,
+                        rating: house.rating,
+                        rooms: house.rooms,
+                        guests: house.guests ?? undefined,
+                      }}
+                      href={`/houses/${house.id}`}
+                      isOwn={isOwn}
+                      showOwnBadge={isOwn}
+                    />
+                  </div>
+                );
+              })}
+          <div className="scroll-row-pad" />
+        </div>
+
+        {/* Аренда авто */}
+        <IonGrid className="section-grid">
+          <IonRow className="ion-align-items-center ion-justify-content-between">
+            <IonCol size="auto">
+              <IonText><strong>Аренда авто</strong></IonText>
+            </IonCol>
+            <IonCol size="auto">
+              <IonButton fill="clear" size="small" routerLink="/cars" className="section-btn">
+                Все <IonIcon icon={chevronForwardOutline} slot="end" />
+              </IonButton>
+            </IonCol>
+          </IonRow>
+        </IonGrid>
+        <div className="scroll-row">
+          <div className="scroll-row-pad" />
+          {loading
+            ? Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="scroll-item"><CarCardSkeleton /></div>
+              ))
+            : cars.slice(0, 4).map((car) => (
+                <div key={car.id} className="scroll-item">
+                  <CarCard
+                    car={{
+                      id: String(car.id),
+                      brand: car.brand,
+                      model: car.model,
+                      pricePerDay: car.pricePerDay,
+                      photo: car.photo,
+                      type: car.type,
+                      seats: car.seats,
+                      transmission: car.transmission,
+                    }}
+                    href={`/cars/${car.id}`}
+                  />
+                </div>
+              ))}
+          <div className="scroll-row-pad" />
+        </div>
+
+        {/* Популярные туры */}
+        <IonGrid className="section-grid">
+          <IonRow className="ion-align-items-center ion-justify-content-between">
+            <IonCol size="auto">
+              <IonText><strong>Популярные туры</strong></IonText>
+            </IonCol>
+            <IonCol size="auto">
+              <IonButton fill="clear" size="small" routerLink="/tours" className="section-btn">
+                Все <IonIcon icon={chevronForwardOutline} slot="end" />
+              </IonButton>
+            </IonCol>
+          </IonRow>
+        </IonGrid>
+        <div className="scroll-row">
+          <div className="scroll-row-pad" />
+          {loading
+            ? Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="scroll-item"><TourCardSkeleton /></div>
+              ))
+            : tours.slice(0, 4).map((tour) => (
+                <div key={tour.id} className="scroll-item">
+                  <TourCard tour={tour} isOwn={!!user && tour.userId === user.id} showOwnBadge={!!user && tour.userId === user.id} />
+                </div>
+              ))}
+          <div className="scroll-row-pad" />
+        </div>
+      </IonContent>
+    </IonPage>
+  );
+};
+
+export default Home;

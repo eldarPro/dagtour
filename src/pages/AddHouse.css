@@ -1,0 +1,40 @@
+.add-house-content {
+  --background: #F0F9FF;
+}
+
+.add-house-form-wrapper {
+  padding: 16px;
+}
+
+.add-house-form {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.add-house-form ion-label {
+  --color: #6b7280 !important;
+}
+
+.add-house-required {
+  color: #d32f2f;
+}
+
+.add-house-error {
+  padding: 12px 4px 0;
+}
+
+.add-house-actions {
+  padding: 20px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.add-house-actions ion-button {
+  --border-radius: 12px;
+}
+
+.add-house-actions ion-button:first-child {
+  --background: #0E7490;
+}

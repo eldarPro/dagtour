@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ' *)",
+      "Bash(node -e ' *)",
+      "Bash(deno eval ' *)",
+      "WebFetch(domain:smsgold.ru)",
+      "Bash(curl -s -X POST https://web.smsgold.ru/http2/ -H 'Content-Type: application/x-www-form-urlencoded' -d 'user=13545&pass=vZ%26%29e3Flmm3X&action=flashCall&number=79017717095')",
+      "Bash(curl -s -X POST https://web.smsgold.ru/http2/ -H 'Content-Type: application/x-www-form-urlencoded' -d 'user=13545&pass=vZ%26%29e3Flmm3X&action=status&call_id=6a008c3c43baf4b336d11f1c')",
+      "Bash(curl -s -X POST https://web.smsgold.ru/http2/ -H 'Content-Type: application/x-www-form-urlencoded' -d 'user=13545&pass=vZ%26%29e3Flmm3X&action=status&call_id=6a008d04f0e8358386a22dfc')",
+      "Bash(curl -s 'https://api-docs.zvonok.com/')",
+      "Bash(curl -sL 'https://api-docs.zvonok.com/' -A \"Mozilla/5.0\")",
+      "WebFetch(domain:api-docs.zvonok.com)",
+      "Bash(curl -s \"https://zvonok.com/manager/cabapi_external/api/v1/phones/call/?public_key=ebb7e39f8bc2c0070b33e6ba4b745fb5&phone=79017717095&campaign_id=test\")",
+      "Bash(curl -s \"https://zvonok.com/manager/cabapi_external/api/v1/phones/campaigns/?public_key=ebb7e39f8bc2c0070b33e6ba4b745fb5\")",
+      "Bash(curl -s \"https://zvonok.com/manager/cabapi_external/api/v1/campaigns/?public_key=ebb7e39f8bc2c0070b33e6ba4b745fb5\")",
+      "Bash(curl -s \"https://zvonok.com/manager/cabapi_external/api/v1/phones/call/?public_key=ebb7e39f8bc2c0070b33e6ba4b745fb5&phone=79017717095&campaign_id=187272583\")"
+    ]
+  }
+}

@@ -1,0 +1,230 @@
+.home-content {
+  --background: #F0F9FF;
+}
+
+/* ── Banner ── */
+.home-banner {
+  --background: linear-gradient(135deg, #C49EDE 0%, #85D6E8 100%);
+  border-radius: 0;
+  margin: 0;
+  box-shadow: none;
+}
+
+.home-banner ion-card-content {
+  padding: 32px 20px 40px;
+}
+
+.home-banner-title {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 0 0 6px;
+}
+
+.home-banner-subtitle {
+  font-size: 14px;
+  opacity: 0.85;
+  margin: 0;
+}
+
+/* ── Search ── */
+.home-searchbar {
+  --border-radius: 14px;
+  --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  --background: #fff;
+  --placeholder-color: #aaa;
+  --icon-color: #0E7490;
+  margin: -20px 16px 0;
+  position: relative;
+  z-index: 2;
+  width: 90%;
+}
+
+/* ── Categories ── */
+.categories-grid {
+  padding-top: 12px;
+  padding-bottom: 0;
+}
+
+.cat-card {
+  --background: #fff;
+  border-radius: 16px;
+  margin: 0;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.cat-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 8px 10px;
+  gap: 4px;
+}
+
+.cat-card-icon {
+  font-size: 28px;
+  padding: 10px;
+  border-radius: 14px;
+  margin-bottom: 4px;
+}
+
+.cat-card-icon--green {
+  background: linear-gradient(135deg, #0E7490, #0891B2);
+  color: #fff;
+}
+
+.cat-card-icon--teal {
+  background: linear-gradient(135deg, #0369A1, #0284C7);
+  color: #fff;
+}
+
+.cat-card-icon--indigo {
+  background: linear-gradient(135deg, #4F46E5, #7C3AED);
+  color: #fff;
+}
+
+.cat-card-content ion-label {
+  font-size: 13px;
+}
+
+.cat-card-content ion-note {
+  font-size: 11px;
+}
+
+/* ── Section headers ── */
+.section-grid {
+  padding-bottom: 0;
+  padding-top: 8px;
+}
+
+.section-grid ion-text {
+  font-size: 18px;
+}
+
+.section-btn {
+  --color: #0E7490;
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: none;
+}
+
+/* ── Horizontal scroll row ── */
+.scroll-item {
+  min-width: 260px;
+  max-width: 260px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+}
+
+.scroll-row {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 0 12px 0;
+  gap: 12px;
+  scrollbar-width: none;
+  margin-left: 12px;
+}
+
+.scroll-row::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-row-pad {
+  min-width: 16px;
+  flex-shrink: 0;
+}
+
+/* ── Mini Card ── */
+.mini-card {
+  --background: #fff;
+  border-radius: 16px;
+  margin: 0;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+  position: relative;
+  min-width: 220px;
+  max-width: 220px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+}
+
+.mini-card-img {
+  width: 100%;
+  height: 130px;
+  display: block;
+}
+
+.mini-card-img::part(image) {
+  object-fit: cover;
+  width: 100%;
+  height: 130px;
+}
+
+.mini-card-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  --background: rgba(0, 0, 0, 0.55);
+  --color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  z-index: 1;
+  backdrop-filter: blur(4px);
+}
+
+.mini-card-badge ion-icon {
+  font-size: 12px;
+  color: #FFD54F;
+}
+
+.mini-card-badge--type {
+  text-transform: capitalize;
+}
+
+.mini-card-badge--type ion-icon {
+  color: #fff;
+}
+
+.mini-card-badge--duration ion-icon {
+  color: #fff;
+}
+
+.mini-card-header {
+  padding: 10px 12px 0;
+}
+
+.mini-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mini-card-subtitle {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+}
+
+.mini-card-subtitle ion-icon {
+  font-size: 13px;
+}
+
+.mini-card-footer {
+  padding: 6px 12px 12px;
+  font-size: 15px;
+}
+
+.mini-card-footer ion-note {
+  font-size: 12px;
+}
