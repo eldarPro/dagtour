@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script>
+      var l = window.location;
+      l.replace(
+        l.protocol + '//' + l.host + '/dagtour/' +
+        '?p=' + encodeURIComponent(l.pathname.replace('/dagtour/', '') + l.search) +
+        (l.hash || '')
+      );
+    </script>
+  </head>
+</html>
