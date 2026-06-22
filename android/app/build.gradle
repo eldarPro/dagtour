@@ -16,10 +16,19 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            storeFile file(System.getenv("DAGTOUR_KEYSTORE_PATH") ?: "${System.getenv('HOME')}/dagtour-release.keystore")
+            storePassword System.getenv("DAGTOUR_KEYSTORE_PASSWORD") ?: ""
+            keyAlias "dagtour"
+            keyPassword System.getenv("DAGTOUR_KEYSTORE_PASSWORD") ?: ""
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 }
