@@ -1,45 +1,48 @@
 .favorites-content {
-  --padding-start: 16px;
-  --padding-end: 16px;
-  --padding-top: 16px;
+  --padding-top: 0;
   --padding-bottom: 24px;
 }
 
-.favorites-loading {
-  display: flex;
-  justify-content: center;
-  padding-top: 60px;
+.favorites-segment {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--ion-background-color, #fff);
+  border-bottom: 1px solid var(--ion-color-light-shade, #e0e0e0);
 }
 
-.favorites-empty {
+.favorites-tab-content {
+  padding-top: 12px;
+}
+
+.favorites-tab-empty {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 60px 32px;
   text-align: center;
-  color: #666;
-}
-
-.favorites-empty p {
-  margin: 4px 0;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.favorites-empty-hint {
-  font-size: 14px !important;
-  font-weight: 400 !important;
   color: #999;
+  font-size: 15px;
+}
+
+.favorites-tab-empty p {
+  margin: 0;
 }
 
 .favorites-section {
   margin-bottom: 8px;
 }
 
-.favorites-section-title {
-  font-size: 18px;
-  font-weight: 700;
-  margin: 16px 0 8px;
-  color: var(--ion-text-color, #111);
+.favorites-map-page {
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  position: relative;
+}
+
+.favorites-map-wrapper {
+  position: absolute;
+  inset: 0;
+  top: 48px;
 }

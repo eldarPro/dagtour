@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
+import { formatPhone } from '../lib/formatPhone';
 import {
   IonPage,
   IonHeader,
@@ -7,66 +8,52 @@ import {
   IonContent,
   IonList,
   IonItem,
-  IonInput,
   IonButton,
   IonText,
   IonIcon,
   IonSpinner,
   IonLabel,
+  IonRefresher,
+  IonRefresherContent,
 } from '@ionic/react';
-import { settingsOutline, personOutline, callOutline, checkmarkCircleOutline, carSportOutline, homeOutline, compassOutline, bookmarkOutline } from 'ionicons/icons';
+import { RefresherEventDetail } from '@ionic/core';
+import { settingsOutline, personOutline, callOutline, carSportOutline, homeOutline, compassOutline, bookmarkOutline } from 'ionicons/icons';
 import { useAuth } from '../lib/auth';
-import { supabase } from '../lib/supabase';
+import { useHistory } from 'react-router-dom';
 import PhoneInput from '../components/PhoneInput';
+import AvatarPhoto from '../components/AvatarPhoto';
 import './Account.css';
+
+const toDialPhone = (raw: string): string => {
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 11 && (digits.startsWith('7') || digits.startsWith('8'))) {
+    return '8' + digits.slice(1);
+  }
+  return raw;
+};
 
 type AuthStep = 'phone' | 'code';
 
-interface Profile {
-  full_name: string | null;
-  phone: string | null;
-}
-
-const ZVONOK_PHONE = import.meta.env.VITE_ZVONOK_PHONE || '+7 800 555-86-07';
-
 const Account: React.FC = () => {
-  const { user, signOut, sendPhoneCode, verifyPhoneCode } = useAuth();
+  const { user, signOut, refreshUser, sendPhoneCode, verifyPhoneCode } = useAuth();
 
   const [authStep, setAuthStep] = useState<AuthStep>('phone');
   const [phone, setPhone] = useState('');
-  const [countdown, setCountdown] = useState(0);
-  const [pollKey, setPollKey] = useState(0);
+  const [phoneToCall, setPhoneToCall] = useState('');
 
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [editingProfile, setEditingProfile] = useState(false);
-  const [editName, setEditName] = useState('');
-  const [editPhone, setEditPhone] = useState('');
+  const history = useHistory();
 
-  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  React.useEffect(() => {
-    if (user) {
-      loadProfile();
-    } else {
-      setProfile(null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
-  // Автополлинг — ждём пока пользователь позвонит на ZVONOK_PHONE
   React.useEffect(() => {
     if (authStep !== 'code') return;
     let active = true;
-    setSubmitting(true);
     setError(null);
 
     const cleanPhone = phone.replace(/\D/g, '');
     verifyPhoneCode(cleanPhone, '').then(result => {
       if (!active) return;
-      setSubmitting(false);
       if (result.error) {
         setError(result.error);
       } else {
@@ -76,49 +63,18 @@ const Account: React.FC = () => {
 
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authStep, pollKey]);
-
-  const loadProfile = async () => {
-    if (!user) return;
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('full_name, phone')
-        .eq('id', user.id)
-        .single();
-      if (!error && data) setProfile(data);
-    } catch (err) {
-      console.error('Failed to load profile:', err);
-    }
-  };
-
-  const startCountdown = () => {
-    if (countdownRef.current) clearInterval(countdownRef.current);
-    setCountdown(60);
-    countdownRef.current = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(countdownRef.current!);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
+  }, [authStep]);
 
   const resetPhoneForm = () => {
     setPhone('');
+    setPhoneToCall('');
     setError(null);
-    setCountdown(0);
-    if (countdownRef.current) clearInterval(countdownRef.current);
     setAuthStep('phone');
-    setPollKey(0);
   };
 
   const handleLogout = async () => {
     await signOut();
     resetPhoneForm();
-    setEditingProfile(false);
   };
 
   const handleSendCode = async () => {
@@ -134,176 +90,99 @@ const Account: React.FC = () => {
       if (result.error) {
         setError(result.error);
       } else {
+        setPhoneToCall(result.phoneToCall || '');
         setAuthStep('code');
-        startCountdown();
       }
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleResendCode = async () => {
-    if (countdown > 0) return;
-    const cleanPhone = phone.replace(/\D/g, '');
-    const result = await sendPhoneCode(cleanPhone);
-    if (!result.error) {
-      setError(null);
-      startCountdown();
-      setPollKey(k => k + 1);
-    } else {
-      setError(result.error);
     }
   };
 
   const handleBackToPhone = () => {
     setAuthStep('phone');
     setError(null);
-    setCountdown(0);
-    if (countdownRef.current) clearInterval(countdownRef.current);
   };
 
-  const startEditProfile = () => {
-    if (!profile) return;
-    setEditName(profile.full_name || '');
-    setEditPhone(profile.phone || '');
-    setError(null);
-    setEditingProfile(true);
-  };
-
-  const handleSaveProfile = async () => {
-    if (!user) return;
-    const nextName = editName.trim();
-    const cleanPhone = editPhone.replace(/\D/g, '');
-    if (!nextName) {
-      setError('Введите имя');
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ full_name: nextName, phone: cleanPhone || null, updated_at: new Date().toISOString() })
-        .eq('id', user.id);
-      if (error) {
-        setError('Ошибка при сохранении');
-      } else {
-        setProfile(prev => prev ? { ...prev, full_name: nextName, phone: cleanPhone || null } : null);
-        setEditingProfile(false);
-        setError(null);
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const cancelEditProfile = () => {
-    setEditingProfile(false);
-    setError(null);
-  };
-
-  const renderAuthForm = () => (
-    <div className="account-auth">
-      <div className="account-auth-header">
-        <IonIcon icon={personOutline} className="account-auth-icon" />
-        <h2>Вход / Регистрация</h2>
-        <p>{authStep === 'phone' ? 'Введите номер телефона' : 'Позвоните на номер для подтверждения'}</p>
-      </div>
-
-      <IonList className="account-form">
-        {authStep === 'phone' ? (
-          <>
-            <div className="account-phone-input">
-              <PhoneInput value={phone} onChange={setPhone} disabled={submitting} />
+  const renderAuthForm = () => {
+    if (authStep === 'code') {
+      return (
+        <div className="account-auth">
+          <div className="account-auth-card account-auth-card--center">
+            <div className="account-icon-circle account-icon-circle--call">
+              <IonIcon icon={callOutline} />
             </div>
-            <div className="account-actions">
-              <IonButton expand="block" onClick={handleSendCode} disabled={submitting}>
-                {submitting ? <IonSpinner name="crescent" /> : 'Продолжить'}
-              </IonButton>
+            <h2 className="account-call-title">Позвоните для подтверждения</h2>
+            <IonText color="medium">
+              <p className="account-call-subtitle">Звонок бесплатный — сбрасывается сразу</p>
+            </IonText>
+            <a href={`tel:${toDialPhone(phoneToCall)}`} className="account-call-btn">
+              <IonIcon icon={callOutline} />
+              <span>{formatPhone(phoneToCall)}</span>
+            </a>
+            <div className="account-waiting-row">
+              <IonSpinner name="dots" />
+              <IonText color="medium"><span>Ожидаем звонка…</span></IonText>
             </div>
-          </>
-        ) : (
-          <>
-            <div className="account-code-sent">
-              <IonIcon icon={checkmarkCircleOutline} color="success" />
-              <IonText color="success">Номер зарегистрирован</IonText>
-            </div>
-
-            <div className="account-call-instruction">
-              <IonIcon icon={callOutline} color="primary" />
-              <div>
-                <p>Позвоните бесплатно с номера <strong>{phone}</strong> на:</p>
-                <p className="account-zvonok-number">{ZVONOK_PHONE}</p>
-              </div>
-            </div>
-
-            {submitting && (
-              <div className="account-waiting">
-                <IonSpinner name="crescent" />
-                <IonText color="medium">Ожидаем звонок...</IonText>
-              </div>
-            )}
-
-            <div className="account-actions">
-              <IonButton expand="block" fill="outline" onClick={handleBackToPhone} disabled={submitting}>
-                Изменить номер
-              </IonButton>
-              <IonButton expand="block" fill="clear" onClick={handleResendCode} disabled={countdown > 0 || submitting}>
-                {countdown > 0 ? `Запросить снова через ${countdown} сек` : 'Запросить снова'}
-              </IonButton>
-            </div>
-          </>
-        )}
-
-        {error && (
-          <div className="account-error">
-            <IonText color="danger">{error}</IonText>
+            {error && <p className="account-error-text">{error}</p>}
+            <IonButton expand="block" fill="clear" onClick={handleBackToPhone}>
+              Изменить номер
+            </IonButton>
           </div>
-        )}
-      </IonList>
-    </div>
-  );
+        </div>
+      );
+    }
+
+    return (
+      <div className="account-auth">
+        <div className="account-auth-header">
+          <IonIcon icon={personOutline} className="account-auth-icon" />
+          <h2>Вход / Регистрация</h2>
+          <p>Введите номер телефона</p>
+        </div>
+        <IonList className="account-form">
+          <div className="account-phone-input">
+            <PhoneInput value={phone} onChange={setPhone} disabled={submitting} />
+          </div>
+          <div className="account-actions">
+            <IonButton expand="block" onClick={handleSendCode} disabled={submitting}>
+              {submitting ? <IonSpinner name="crescent" /> : 'Продолжить'}
+            </IonButton>
+          </div>
+          {error && (
+            <div className="account-error">
+              <IonText color="danger">{error}</IonText>
+            </div>
+          )}
+        </IonList>
+      </div>
+    );
+  };
 
   const renderProfile = () => {
-    const displayName = profile?.full_name || 'Пользователь';
-    const displayPhone = profile?.phone || user?.phone || '';
+    const displayName = user?.full_name || 'Пользователь';
+    const displayPhone = user?.phone || '';
+    const bio = user?.bio ?? '';
+    const bioTruncated = bio.length > 250 ? bio.slice(0, 250) + '…' : bio;
 
     return (
       <div className="account-profile">
         <div className="account-profile-header">
-          <div className="account-avatar">
-            {displayName?.[0]?.toUpperCase() ?? 'U'}
-          </div>
+          <AvatarPhoto
+            src={user?.avatar_url ?? undefined}
+            className="account-avatar"
+            placeholder={<span>{displayName[0].toUpperCase()}</span>}
+          />
           <div className="account-profile-info">
             <h2>{displayName}</h2>
-            {displayPhone && <p className="account-phone">{displayPhone}</p>}
+            {displayPhone && <p className="account-phone">{formatPhone(displayPhone)}</p>}
           </div>
-          <button type="button" className="account-edit-btn" onClick={startEditProfile}>
+          <button type="button" className="account-edit-btn" onClick={() => history.push('/edit-profile')}>
             <IonIcon icon={settingsOutline} />
           </button>
         </div>
 
-        {editingProfile && (
-          <IonList className="account-edit-form">
-            <IonItem>
-              <IonIcon icon={personOutline} slot="start" color="medium" />
-              <IonInput value={editName} placeholder="Ваше имя" onIonInput={(e) => setEditName(e.detail.value ?? '')} />
-            </IonItem>
-
-            <div className="account-actions account-actions--profile">
-              <IonButton expand="block" onClick={handleSaveProfile} disabled={submitting}>
-                {submitting ? <IonSpinner name="crescent" /> : 'Сохранить'}
-              </IonButton>
-              <IonButton expand="block" fill="outline" onClick={cancelEditProfile}>
-                Отмена
-              </IonButton>
-            </div>
-          </IonList>
-        )}
-
-        {error && !editingProfile && (
-          <div className="account-error">
-            <IonText color="danger">{error}</IonText>
-          </div>
+        {bioTruncated && (
+          <p className="account-bio">{bioTruncated}</p>
         )}
 
         <IonList className="account-menu">
@@ -334,6 +213,11 @@ const Account: React.FC = () => {
     );
   };
 
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    await refreshUser();
+    event.detail.complete();
+  };
+
   return (
     <IonPage>
       <IonHeader>
@@ -342,6 +226,9 @@ const Account: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen className="account-content">
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+          <IonRefresherContent />
+        </IonRefresher>
         {user ? renderProfile() : renderAuthForm()}
       </IonContent>
     </IonPage>

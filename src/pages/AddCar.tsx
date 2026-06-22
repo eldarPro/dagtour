@@ -23,36 +23,58 @@ import { useAuth } from '../lib/auth';
 import { chevronBackOutline } from 'ionicons/icons';
 import LocationPicker from '../components/LocationPicker';
 import PhotoUpload from '../components/PhotoUpload';
+import ContactSection from '../components/ContactSection';
+import CheckboxRow from '../components/CheckboxRow';
+import { useContactFields } from '../lib/useContactFields';
 import { useUserPhone } from '../lib/useUserPhone';
 import './AddCar.css';
+
+const CAR_TYPES = ['Седан', 'Хэтчбек', 'Кроссовер', 'Внедорожник', 'Минивэн'];
+const CONDITIONS_OPTIONS = ['Без водителя', 'С водителем', 'Разрешён выезд в горы', 'Доставка в аэропорт'];
 
 const AddCar: React.FC = () => {
   const history = useHistory();
   const { user } = useAuth();
   const userPhone = useUserPhone();
+  const { contacts, contactErrors, updateContact, validateContacts, phoneKey, setPhoneKey } = useContactFields();
 
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
   const [year, setYear] = useState('');
   const [price, setPrice] = useState('');
+  const [carType, setCarType] = useState('');
+  const [seats, setSeats] = useState('');
   const [transmission, setTransmission] = useState('');
+  const [conditions, setConditions] = useState<string[]>([]);
+  const [deposit, setDeposit] = useState('');
   const [description, setDescription] = useState('');
-  const [phone, setPhone] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [location, setLocation] = useState<{ address: string; lat: number; lng: number } | null>(null);
+  const [location, setLocation] = useState<import('../components/LocationPicker').LocationValue | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
 
   useEffect(() => {
-    if (userPhone) setPhone(prev => prev || userPhone);
+    if (userPhone && !phoneKey) {
+      updateContact('phone', userPhone);
+      setPhoneKey(userPhone);
+    }
   }, [userPhone]);
+
+  const toggleCondition = (item: string) => {
+    setConditions((prev) =>
+      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
+    );
+  };
 
   const handleSubmit = async () => {
     if (!brand.trim()) { setError('Укажите марку авто'); return; }
     if (!model.trim()) { setError('Укажите модель авто'); return; }
+    if (!carType) { setError('Укажите тип кузова'); return; }
     if (!year || isNaN(Number(year))) { setError('Укажите корректный год'); return; }
     if (!price || isNaN(Number(price))) { setError('Укажите цену аренды'); return; }
+    if (!location) { setError('Укажите местоположение автомобиля'); return; }
     if (!user) { setError('Необходимо войти в аккаунт'); return; }
+    if (!validateContacts()) return;
 
     setError(null);
     setSubmitting(true);
@@ -63,10 +85,21 @@ const AddCar: React.FC = () => {
         model: model.trim(),
         year: Number(year),
         pricePerDay: Number(price),
+        type: carType,
+        seats: seats ? Number(seats) : undefined,
         transmission: transmission || undefined,
+        conditions,
+        deposit: deposit ? Number(deposit) : undefined,
         description: description.trim() || undefined,
-        phone: phone.trim() || undefined,
+        phone: contacts.phone.trim() || undefined,
+        whatsapp: contacts.whatsapp.trim() || undefined,
+        telegram: contacts.telegram.trim() || undefined,
+        vk: contacts.vk.trim() || undefined,
         address: location?.address,
+        location: location?.city,
+        city: location?.city,
+        district: location?.district,
+        region: location?.region,
         lat: location?.lat,
         lng: location?.lng,
         photos,
@@ -112,6 +145,21 @@ const AddCar: React.FC = () => {
             </IonItem>
 
             <IonItem>
+              <IonLabel position="stacked">Тип кузова <span className="add-car-required">*</span></IonLabel>
+              <IonSelect
+                placeholder="Выберите тип"
+                value={carType}
+                onIonChange={(e) => setCarType(e.detail.value ?? '')}
+                interface="action-sheet"
+                cancelText="Отмена"
+              >
+                {CAR_TYPES.map((t) => (
+                  <IonSelectOption key={t} value={t}>{t}</IonSelectOption>
+                ))}
+              </IonSelect>
+            </IonItem>
+
+            <IonItem>
               <IonLabel position="stacked">Год выпуска <span className="add-car-required">*</span></IonLabel>
               <IonInput
                 type="number"
@@ -134,41 +182,67 @@ const AddCar: React.FC = () => {
             </IonItem>
 
             <IonItem>
+              <IonLabel position="stacked">Количество мест</IonLabel>
+              <IonInput
+                type="number"
+                inputmode="numeric"
+                placeholder="Например: 5"
+                value={seats}
+                onIonChange={(e) => setSeats(e.detail.value ?? '')}
+              />
+            </IonItem>
+
+            <IonItem>
               <IonLabel position="stacked">Коробка передач</IonLabel>
               <IonSelect
                 placeholder="Выберите тип"
                 value={transmission}
                 onIonChange={(e) => setTransmission(e.detail.value)}
+                interface="action-sheet"
+                cancelText="Отмена"
               >
-                <IonSelectOption value="auto">Автомат</IonSelectOption>
-                <IonSelectOption value="manual">Механика</IonSelectOption>
-                <IonSelectOption value="robot">Робот</IonSelectOption>
+                <IonSelectOption value="автомат">Автомат</IonSelectOption>
+                <IonSelectOption value="механика">Механика</IonSelectOption>
+                <IonSelectOption value="робот">Робот</IonSelectOption>
               </IonSelect>
             </IonItem>
 
             <IonItem>
-              <IonLabel position="stacked">Телефон для связи</IonLabel>
+              <IonLabel position="stacked">Залог (₽)</IonLabel>
               <IonInput
-                type="tel"
-                inputmode="tel"
-                placeholder="Например: +7 900 000 00 00"
-                value={phone}
-                onIonChange={(e) => setPhone(e.detail.value ?? '')}
+                type="number"
+                inputmode="numeric"
+                placeholder="Например: 5000"
+                value={deposit}
+                onIonChange={(e) => setDeposit(e.detail.value ?? '')}
               />
             </IonItem>
 
-            <LocationPicker value={location} onChange={setLocation} />
+            <LocationPicker value={location} onChange={setLocation} required />
+          </IonList>
 
+          <IonList className="add-car-form" style={{ marginTop: 16 }}>
+            <IonItem lines="none">
+              <IonLabel position="stacked">Условия аренды</IonLabel>
+            </IonItem>
+            {CONDITIONS_OPTIONS.map((item) => (
+              <CheckboxRow key={item} label={item} checked={conditions.includes(item)} onChange={() => toggleCondition(item)} />
+            ))}
+          </IonList>
+
+          <IonList className="add-car-form" style={{ marginTop: 16 }}>
             <IonItem>
               <IonLabel position="stacked">Описание</IonLabel>
               <IonTextarea
-                placeholder="Расскажите подробнее об автомобиле..."
+                placeholder="Ваше описание об автомобиле..."
                 rows={4}
                 value={description}
                 onIonChange={(e) => setDescription(e.detail.value ?? '')}
               />
             </IonItem>
           </IonList>
+
+          <ContactSection contacts={contacts} onChange={updateContact} phoneKey={phoneKey} errors={contactErrors} />
 
           {error && (
             <div className="add-car-error">

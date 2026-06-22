@@ -11,7 +11,7 @@
   --background-checked: #f2f2f2;
   --color: #444444;
   --color-checked: #111111;
-  --indicator-color: #0E7490;
+  --indicator-color: #41BDD8;
 }
 
 .list-content {
@@ -44,6 +44,7 @@
   background: #E53935;
   border: 1.5px solid #fff;
 }
+
 
 .no-results {
   display: flex;

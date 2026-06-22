@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useHistory, useParams } from 'react-router-dom';
+import { formatPhone } from '../lib/formatPhone';
 import {
   IonContent,
   IonHeader,
@@ -19,35 +20,46 @@ import {
   IonItem,
   IonFooter,
   IonSpinner,
+  IonRefresher,
+  IonRefresherContent,
 } from '@ionic/react';
 import { timeOutline, navigateOutline, ellipseOutline, flagOutline, locationOutline, chevronBackOutline, callOutline, settingsOutline, bookmark, bookmarkOutline } from 'ionicons/icons';
-import { getTour, Tour } from '../lib/api';
+import { getTour, updateTour, deleteTour, Tour } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useFavorites } from '../lib/favoritesContext';
+import CardMenuButton from '../components/CardMenuButton';
 import PhotoGallery from '../components/PhotoGallery';
+import ReviewsLink from '../components/ReviewsLink';
+import AuthorLink from '../components/AuthorLink';
+import SocialLinks from '../components/SocialLinks';
 import { formatDays } from '../lib/formatDays';
 import './TourDetail.css';
 
 const TourDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const history = useHistory();
   const { user } = useAuth();
   const { isFavorited, toggle } = useFavorites();
   const [tour, setTour] = useState<Tour | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await getTour(Number(id));
-        setTour(data);
-      } catch (error) {
-        console.error('Failed to load tour:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+  const fetchData = useCallback(async () => {
+    try {
+      const data = await getTour(Number(id));
+      setTour(data);
+    } catch (error) {
+      console.error('Failed to load tour:', error);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const handleRefresh = async (e: CustomEvent) => {
+    await fetchData();
+    (e.target as HTMLIonRefresherElement).complete();
+  };
 
   if (loading) {
     return (
@@ -84,6 +96,24 @@ const TourDetail: React.FC = () => {
   }
 
   const isOwn = !!user && tour?.userId === user.id;
+
+  const handleToggleActive = async () => {
+    try {
+      const updated = await updateTour(tour.id, { active: !tour.active });
+      setTour(prev => prev ? { ...prev, active: updated.active } : prev);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteTour(tour.id);
+      history.goBack();
+    } catch (err) {
+      console.error(err);
+    }
+  };
   const placeholder = `https://placehold.co/800x500/2E7D32/FFFFFF?text=${encodeURIComponent(tour.name)}`;
   const photos = tour.photos?.length ? tour.photos : (tour.photo ? [tour.photo] : [placeholder]);
 
@@ -112,14 +142,20 @@ const TourDetail: React.FC = () => {
               <IonIcon slot="icon-only" icon={isFavorited('tour', tour.id) ? bookmark : bookmarkOutline} style={isFavorited('tour', tour.id) ? { color: '#ef4444' } : undefined} />
             </IonButton>
             {isOwn && (
-              <IonButton routerLink={`/edit-tour/${tour.id}`}>
-                <IonIcon slot="icon-only" icon={settingsOutline} />
-              </IonButton>
+              <CardMenuButton
+                editHref={`/edit-tour/${tour.id}`}
+                active={tour.active}
+                onToggleActive={handleToggleActive}
+                onDelete={handleDelete}
+              />
             )}
           </IonButtons>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+          <IonRefresherContent />
+        </IonRefresher>
         <PhotoGallery photos={photos} alt={tour.name} />
         <div className="detail-body">
           <IonText>
@@ -131,10 +167,12 @@ const TourDetail: React.FC = () => {
               <IonIcon icon={timeOutline} color="primary" />
               <IonLabel>{formatDays(tour.duration)}</IonLabel>
             </IonChip>
-            <IonChip>
-              <IonIcon icon={navigateOutline} color="primary" />
-              <IonLabel>{tour.route.length} точек</IonLabel>
-            </IonChip>
+            {tour.meetingPoint && (
+              <IonChip>
+                <IonIcon icon={locationOutline} color="primary" />
+                <IonLabel>Выезд: {tour.meetingPoint}</IonLabel>
+              </IonChip>
+            )}
           </div>
 
           <IonText>
@@ -165,6 +203,9 @@ const TourDetail: React.FC = () => {
               </IonItem>
             ))}
           </IonList>
+          <ReviewsLink itemType="tour" itemId={tour.id} />
+          <AuthorLink author={tour.author} />
+          <SocialLinks whatsapp={tour.whatsapp} telegram={tour.telegram} vk={tour.vk} />
         </div>
       </IonContent>
       <IonFooter className="detail-footer">
@@ -178,7 +219,7 @@ const TourDetail: React.FC = () => {
           {tour.phone && (
             <IonButton slot="end" fill="outline" shape="round" className="detail-book-btn" href={`tel:${tour.phone}`}>
               <IonIcon slot="start" icon={callOutline} />
-              {tour.phone}
+              {formatPhone(tour.phone)}
             </IonButton>
           )}
         </IonToolbar>

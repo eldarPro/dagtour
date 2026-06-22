@@ -4,6 +4,7 @@ import {
   IonCardContent,
   IonCardHeader,
   IonCardTitle,
+  IonCardSubtitle,
   IonChip,
   IonIcon,
   IonImg,
@@ -11,9 +12,10 @@ import {
   IonNote,
 } from '@ionic/react';
 import { useLocation } from 'react-router-dom';
-import { peopleOutline, cogOutline } from 'ionicons/icons';
+import { locationOutline, peopleOutline, cogOutline } from 'ionicons/icons';
 import BookmarkButton from './BookmarkButton';
-import CardEditButton from './CardEditButton';
+import CardMenuButton from './CardMenuButton';
+import { transmissionLabel } from '../data/carFilters';
 import './CarCard.css';
 
 export interface CarCardData {
@@ -23,9 +25,11 @@ export interface CarCardData {
   year?: number;
   pricePerDay: number;
   photo?: string;
+  location?: string;
   type?: string;
   seats?: number;
   transmission?: string;
+  active?: boolean;
 }
 
 interface CarCardProps {
@@ -33,17 +37,32 @@ interface CarCardProps {
   href?: string;
   isOwn?: boolean;
   showOwnBadge?: boolean;
+  onToggleActive?: () => void;
+  onDelete?: () => void;
 }
 
-const CarCard: React.FC<CarCardProps> = ({ car, href, isOwn, showOwnBadge }) => {
+const CarCard: React.FC<CarCardProps> = ({ car, href, isOwn, showOwnBadge, onToggleActive, onDelete }) => {
   const location = useLocation();
   const placeholder = `https://placehold.co/400x300/0E7490/FFFFFF?text=${encodeURIComponent(car.brand + ' ' + car.model)}`;
+  const inactive = car.active === false;
 
   return (
-    <IonCard className={`car-card${showOwnBadge ? ' car-card--own' : ''}`} button={!!href} routerLink={href}>
-      <IonImg src={car.photo ?? placeholder} alt={`${car.brand} ${car.model}`} className="car-card-img" />
+    <IonCard
+      className={`car-card${showOwnBadge ? ' car-card--own' : ''}${inactive ? ' car-card--inactive' : ''}`}
+      button={!!href || !!isOwn}
+      routerLink={isOwn ? `/cars/${car.id}` : href}
+    >
+      <div className="card-img-wrap">
+        <IonImg src={car.photo ?? placeholder} alt={`${car.brand} ${car.model}`} className="car-card-img" />
+        {inactive && <span className="card-hidden-badge">Скрыто</span>}
+      </div>
       <IonCardHeader>
         <IonCardTitle className="car-card-title">{car.brand} {car.model}</IonCardTitle>
+        {car.location && (
+          <IonCardSubtitle className="car-card-location">
+            <IonIcon icon={locationOutline} /> {car.location}
+          </IonCardSubtitle>
+        )}
       </IonCardHeader>
       <IonCardContent>
         <div className="car-card-chips">
@@ -56,7 +75,7 @@ const CarCard: React.FC<CarCardProps> = ({ car, href, isOwn, showOwnBadge }) => 
           {car.transmission && (
             <IonChip className="car-card-chip">
               <IonIcon icon={cogOutline} />
-              <IonText>{car.transmission}</IonText>
+              <IonText>{transmissionLabel(car.transmission)}</IonText>
             </IonChip>
           )}
           {car.year && !car.seats && (
@@ -71,10 +90,17 @@ const CarCard: React.FC<CarCardProps> = ({ car, href, isOwn, showOwnBadge }) => 
           </IonText>
           <IonNote className="car-card-per">/ день</IonNote>
           <div className="car-card-actions">
-            {isOwn && (
-              <CardEditButton href={`/edit-car/${car.id}?from=${encodeURIComponent(location.pathname)}`} />
-            )}
-            <BookmarkButton type="car" id={Number(car.id)} />
+            {isOwn
+              ? (
+                <CardMenuButton
+                  editHref={`/edit-car/${car.id}?from=${encodeURIComponent(location.pathname)}`}
+                  active={car.active}
+                  onToggleActive={onToggleActive}
+                  onDelete={onDelete}
+                />
+              )
+              : <BookmarkButton type="car" id={Number(car.id)} />
+            }
           </div>
         </div>
       </IonCardContent>

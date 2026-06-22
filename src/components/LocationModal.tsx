@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   IonModal,
   IonHeader,
@@ -9,16 +9,18 @@ import {
   IonContent,
   IonSearchbar,
   IonList,
-  IonListHeader,
   IonItem,
   IonLabel,
   IonNote,
   IonIcon,
   IonFooter,
   IonAlert,
+  IonSpinner,
 } from '@ionic/react';
 import { closeOutline, mapOutline, arrowBackOutline } from 'ionicons/icons';
-import { cities, districts, Place } from '../data/dagestanLocations';
+import { dadataService, formatShortAddress } from '../services/dadataService';
+import type { AddressData } from '../services/dadataService';
+import type { LocationValue } from './LocationPicker';
 import './LocationModal.css';
 
 const YANDEX_API_KEY = '57398362-80f4-4fe3-a697-4fbd3ceb320c';
@@ -33,19 +35,14 @@ const isInDagestan = (lat: number, lng: number) =>
   lat >= DAGESTAN_BOUNDS.minLat && lat <= DAGESTAN_BOUNDS.maxLat &&
   lng >= DAGESTAN_BOUNDS.minLng && lng <= DAGESTAN_BOUNDS.maxLng;
 
-interface Props {
-  isOpen: boolean;
-  onClose: () => void;
-  onSelect: (loc: { address: string; lat: number; lng: number }) => void;
+interface ReverseResult {
+  address: string;
+  city: string | null;
+  district: string | null;
+  region: string | null;
 }
 
-type Mode = 'list' | 'map';
-
-interface SearchResult extends Place {
-  district?: string;
-}
-
-const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
+const reverseGeocode = async (lat: number, lng: number): Promise<ReverseResult> => {
   try {
     const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&geocode=${lng},${lat}&format=json&results=1&lang=ru_RU`;
     const res = await fetch(url);
@@ -68,47 +65,83 @@ const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
     const streetFormatted = street ? abbreviateStreet(street) : undefined;
     const locality = get('locality');
     const area = get('area');
+    const province = get('province');
+    const cityName = locality || area || null;
     const parts: string[] = [];
     if (locality) parts.push(locality);
     else if (area) parts.push(area);
     if (streetFormatted && house) parts.push(`${streetFormatted}, ${house}`);
     else if (streetFormatted) parts.push(streetFormatted);
-    if (parts.length > 0) return parts.join(', ');
+    if (parts.length > 0) return { address: parts.join(', '), city: cityName, district: area || null, region: province || null };
     const text = geoObject?.metaDataProperty?.GeocoderMetaData?.text;
     const cleaned = text
       ?.replace(/^Россия,\s*/i, '')
       .replace(/^Республика Дагестан,\s*/i, '')
       .trim();
-    return cleaned ?? `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    return { address: cleaned ?? `${lat.toFixed(5)}, ${lng.toFixed(5)}`, city: cityName, district: area || null, region: province || null };
   } catch {
-    return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    return { address: `${lat.toFixed(5)}, ${lng.toFixed(5)}`, city: null, district: null, region: null };
   }
 };
+
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (loc: LocationValue) => void;
+}
+
+type Mode = 'list' | 'map';
 
 const LocationModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
   const [mode, setMode] = useState<Mode>('list');
   const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<AddressData[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [mapCoords, setMapCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [mapAddress, setMapAddress] = useState<string | null>(null);
-
+  const [mapCity, setMapCity] = useState<string | null>(null);
+  const [mapDistrict, setMapDistrict] = useState<string | null>(null);
+  const [mapRegion, setMapRegion] = useState<string | null>(null);
   const [outsideAlert, setOutsideAlert] = useState(false);
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Сброс при открытии
   useEffect(() => {
     if (isOpen) {
       setMode('list');
       setQuery('');
+      setSuggestions([]);
+      setIsSearching(false);
       setMapCoords(null);
       setMapAddress(null);
+      setMapCity(null);
+      setMapDistrict(null);
+      setMapRegion(null);
       setOutsideAlert(false);
     }
   }, [isOpen]);
 
-  // Инициализация карты
+  useEffect(() => {
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    if (query.trim().length >= 2) {
+      setIsSearching(true);
+      searchTimeout.current = setTimeout(async () => {
+        const results = await dadataService.suggestAddress(query.trim());
+        setSuggestions(results);
+        setIsSearching(false);
+      }, 300);
+    } else {
+      setSuggestions([]);
+      setIsSearching(false);
+    }
+    return () => {
+      if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    };
+  }, [query]);
+
   useEffect(() => {
     if (!isOpen || mode !== 'map') return;
 
@@ -139,9 +172,7 @@ const LocationModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
             return;
           }
 
-          if (markerRef.current) {
-            map.removeChild(markerRef.current);
-          }
+          if (markerRef.current) map.removeChild(markerRef.current);
           const el = document.createElement('div');
           el.className = 'location-map-marker';
           const marker = new YMapMarker({ coordinates: [lng, lat] }, el);
@@ -150,8 +181,16 @@ const LocationModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
 
           setMapCoords({ lat, lng });
           setMapAddress('Загрузка адреса...');
-          reverseGeocode(lat, lng).then((address) => {
-            if (!cancelled) setMapAddress(address);
+          setMapCity(null);
+          setMapDistrict(null);
+          setMapRegion(null);
+          reverseGeocode(lat, lng).then(({ address, city, district, region }) => {
+            if (!cancelled) {
+              setMapAddress(address);
+              setMapCity(city);
+              setMapDistrict(district);
+              setMapRegion(region);
+            }
           });
         },
       });
@@ -184,32 +223,28 @@ const LocationModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
     };
   }, [isOpen, mode]);
 
-  const searchResults = useMemo<SearchResult[]>(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-
-    const results: SearchResult[] = [];
-
-    for (const city of cities) {
-      if (city.name.toLowerCase().includes(q)) results.push(city);
-    }
-    for (const d of districts) {
-      for (const s of d.settlements) {
-        if (s.name.toLowerCase().includes(q)) {
-          results.push({ ...s, district: d.name });
-        }
-      }
-    }
-    return results;
-  }, [query]);
-
-  const handleSelectPlace = (place: Place) => {
-    onSelect({ address: place.name, lat: place.lat, lng: place.lng });
+  const handleSelectSuggestion = (s: AddressData) => {
+    if (!s.lat || !s.lng) return;
+    onSelect({
+      address: formatShortAddress(s) || s.city,
+      city: s.city,
+      district: s.district,
+      region: s.region || undefined,
+      lat: s.lat,
+      lng: s.lng,
+    });
   };
 
   const handleConfirmMap = () => {
     if (!mapCoords || !mapAddress || mapAddress === 'Загрузка адреса...') return;
-    onSelect({ address: mapAddress, lat: mapCoords.lat, lng: mapCoords.lng });
+    onSelect({
+      address: mapAddress,
+      city: mapCity || undefined,
+      district: mapDistrict || undefined,
+      region: mapRegion || undefined,
+      lat: mapCoords.lat,
+      lng: mapCoords.lng,
+    });
   };
 
   return (
@@ -234,8 +269,8 @@ const LocationModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
             <IonSearchbar
               value={query}
               onIonInput={(e) => setQuery((e.detail.value as string) ?? '')}
-              placeholder="Поиск населённого пункта..."
-              debounce={150}
+              placeholder="Введите адрес или населённый пункт..."
+              debounce={0}
             />
           </IonToolbar>
         )}
@@ -256,47 +291,40 @@ const LocationModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
               <div className="location-modal-coords">{mapAddress}</div>
             )}
           </>
-        ) : query.trim() ? (
+        ) : (
           <IonList lines="inset">
-            {searchResults.length === 0 ? (
+            {query.trim().length < 2 ? (
+              <IonItem>
+                <IonLabel color="medium" style={{ fontSize: 14 }}>
+                  Введите не менее 2 символов для поиска
+                </IonLabel>
+              </IonItem>
+            ) : isSearching ? (
+              <IonItem>
+                <IonSpinner name="crescent" slot="start" />
+                <IonLabel color="medium">Поиск...</IonLabel>
+              </IonItem>
+            ) : suggestions.length === 0 ? (
               <IonItem>
                 <IonLabel color="medium">Ничего не найдено</IonLabel>
               </IonItem>
             ) : (
-              searchResults.map((place) => (
+              suggestions.map((s, i) => (
                 <IonItem
                   button
-                  key={`${place.name}-${place.lat}`}
-                  onClick={() => handleSelectPlace(place)}
+                  key={i}
+                  onClick={() => handleSelectSuggestion(s)}
+                  disabled={!s.lat || !s.lng}
                 >
-                  <IonLabel>{place.name}</IonLabel>
-                  {place.district && (
+                  <IonLabel>{formatShortAddress(s) || s.city}</IonLabel>
+                  {s.district && (
                     <IonNote slot="end" className="location-district-note">
-                      {place.district.replace(' район', ' р-н')}
+                      {s.district}
                     </IonNote>
                   )}
                 </IonItem>
               ))
             )}
-          </IonList>
-        ) : (
-          <IonList lines="inset">
-            <IonListHeader className="location-list-header">Города</IonListHeader>
-            {cities.map((city) => (
-              <IonItem button key={city.name} onClick={() => handleSelectPlace(city)}>
-                <IonLabel>{city.name}</IonLabel>
-              </IonItem>
-            ))}
-            {districts.map((d) => (
-              <React.Fragment key={d.name}>
-                <IonListHeader className="location-list-header">{d.name}</IonListHeader>
-                {d.settlements.map((s) => (
-                  <IonItem button key={`${d.name}-${s.name}`} onClick={() => handleSelectPlace(s)}>
-                    <IonLabel>{s.name}</IonLabel>
-                  </IonItem>
-                ))}
-              </React.Fragment>
-            ))}
           </IonList>
         )}
       </IonContent>

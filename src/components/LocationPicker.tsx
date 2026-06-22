@@ -5,6 +5,9 @@ import './LocationPicker.css';
 
 export interface LocationValue {
   address: string;
+  city?: string;
+  district?: string;
+  region?: string;
   lat: number;
   lng: number;
 }
@@ -12,15 +15,16 @@ export interface LocationValue {
 interface LocationPickerProps {
   value: LocationValue | null;
   onChange: (loc: LocationValue) => void;
+  required?: boolean;
 }
 
-const LocationPicker: React.FC<LocationPickerProps> = ({ value, onChange }) => {
+const LocationPicker: React.FC<LocationPickerProps> = ({ value, onChange, required }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
       <IonItem button onClick={() => setIsOpen(true)}>
-        <IonLabel position="stacked">Местоположение</IonLabel>
+        <IonLabel position="stacked">Местоположение {required && <span style={{ color: 'var(--ion-color-danger)' }}>*</span>}</IonLabel>
         {value ? (
           <div className="location-picker-value">{value.address}</div>
         ) : (

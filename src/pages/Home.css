@@ -113,6 +113,16 @@
   max-width: 260px;
   flex-shrink: 0;
   scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Карточки растягиваются на всю высоту scroll-item */
+.scroll-item .car-card,
+.scroll-item .house-card,
+.scroll-item .tour-card {
+  flex: 1;
+  margin: 0;
 }
 
 .scroll-row {

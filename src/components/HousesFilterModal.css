@@ -2,6 +2,12 @@
   --background: #F0F9FF;
 }
 
+.filter-modal-content::part(background) {
+  opacity: 1;
+  background-color: #F0F9FF;
+  background-image: none;
+}
+
 .filter-section {
   padding: 16px 16px 8px;
   border-bottom: 1px solid #BAE6FD;
@@ -71,6 +77,45 @@
 .filter-select-item ion-select {
   --color: #0E7490;
   font-weight: 500;
+}
+
+.filter-number-row {
+  display: flex;
+  gap: 12px;
+}
+
+.filter-number-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-number-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+}
+
+.filter-number-input {
+  background: #fff;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 15px;
+  color: #111;
+  outline: none;
+  width: 100%;
+  -moz-appearance: textfield;
+}
+
+.filter-number-input::-webkit-outer-spin-button,
+.filter-number-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+.filter-number-input:focus {
+  border-color: #0E7490;
 }
 
 .filter-footer {

@@ -16,43 +16,54 @@ import {
   IonSelectOption,
   IonButton,
   IonText,
-  IonAlert,
   useIonViewWillEnter,
 } from '@ionic/react';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
-import { getCar, updateCar, deleteCar, Car } from '../lib/api';
+import { getCar, updateCar, Car } from '../lib/api';
 import { chevronBackOutline } from 'ionicons/icons';
 import LocationPicker from '../components/LocationPicker';
 import PhotoUpload from '../components/PhotoUpload';
+import ContactSection from '../components/ContactSection';
+import CheckboxRow from '../components/CheckboxRow';
+import { useContactFields } from '../lib/useContactFields';
 import './AddCar.css';
+
+const CAR_TYPES = ['Седан', 'Хэтчбек', 'Кроссовер', 'Внедорожник', 'Минивэн'];
+const CONDITIONS_OPTIONS = ['Без водителя', 'С водителем', 'Разрешён выезд в горы', 'Доставка в аэропорт'];
 
 const EditCar: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const history = useHistory();
   const routerLocation = useLocation();
   const returnPath = new URLSearchParams(routerLocation.search).get('from') ?? '/my-cars';
+  const { contacts, contactRef, contactErrors, updateContact, loadContacts, validateContacts, phoneKey } = useContactFields();
 
   const [car, setCar] = useState<Car | null>(null);
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
   const [year, setYear] = useState('');
   const [price, setPrice] = useState('');
+  const [carType, setCarType] = useState('');
+  const [seats, setSeats] = useState('');
   const [transmission, setTransmission] = useState('');
+  const [conditions, setConditions] = useState<string[]>([]);
+  const [deposit, setDeposit] = useState('');
   const [description, setDescription] = useState('');
-  const [phone, setPhone] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
-  const [pickerLocation, setPickerLocation] = useState<{ address: string; lat: number; lng: number } | null>(null);
+  const [pickerLocation, setPickerLocation] = useState<import('../components/LocationPicker').LocationValue | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
 
   const brandRef = useRef('');
   const modelRef = useRef('');
   const yearRef = useRef('');
   const priceRef = useRef('');
+  const carTypeRef = useRef('');
+  const seatsRef = useRef('');
   const transmissionRef = useRef('');
+  const conditionsRef = useRef<string[]>([]);
+  const depositRef = useRef('');
   const descriptionRef = useRef('');
-  const phoneRef = useRef('');
 
   useIonViewWillEnter(() => {
     getCar(Number(id)).then((found) => {
@@ -62,17 +73,34 @@ const EditCar: React.FC = () => {
       setModel(found.model); modelRef.current = found.model;
       setYear(found.year ? String(found.year) : ''); yearRef.current = found.year ? String(found.year) : '';
       setPrice(String(found.pricePerDay)); priceRef.current = String(found.pricePerDay);
+      const ct = found.type ?? ''; setCarType(ct); carTypeRef.current = ct;
+      const s = found.seats ? String(found.seats) : ''; setSeats(s); seatsRef.current = s;
       setTransmission(found.transmission ?? ''); transmissionRef.current = found.transmission ?? '';
+      const cond = found.conditions ?? []; setConditions(cond); conditionsRef.current = cond;
+      const dep = found.deposit ? String(found.deposit) : ''; setDeposit(dep); depositRef.current = dep;
       setDescription(found.description ?? ''); descriptionRef.current = found.description ?? '';
-      setPhone(found.phone ?? ''); phoneRef.current = found.phone ?? '';
+      loadContacts({
+        phone: found.phone ?? '',
+        whatsapp: found.whatsapp ?? '',
+        telegram: found.telegram ?? '',
+        vk: found.vk ?? '',
+      }, found.phone || 'loaded');
       setPickerLocation(
         found.lat != null && found.lng != null
-          ? { address: found.address ?? '', lat: found.lat, lng: found.lng }
+          ? { address: found.address ?? '', city: found.city ?? found.location, district: found.district, region: found.region, lat: found.lat, lng: found.lng }
           : null
       );
       setPhotos(found.photos ?? []);
     });
   });
+
+  const toggleCondition = (item: string) => {
+    const next = conditionsRef.current.includes(item)
+      ? conditionsRef.current.filter((i) => i !== item)
+      : [...conditionsRef.current, item];
+    setConditions(next);
+    conditionsRef.current = next;
+  };
 
   const handleSave = async () => {
     const b = brandRef.current.trim();
@@ -82,8 +110,11 @@ const EditCar: React.FC = () => {
 
     if (!b) { setError('Укажите марку авто'); return; }
     if (!m) { setError('Укажите модель авто'); return; }
+    if (!carTypeRef.current) { setError('Укажите тип кузова'); return; }
     if (!y || isNaN(Number(y))) { setError('Укажите корректный год'); return; }
     if (!p || isNaN(Number(p))) { setError('Укажите цену аренды'); return; }
+    if (!pickerLocation) { setError('Укажите местоположение автомобиля'); return; }
+    if (!validateContacts()) return;
 
     setError(null);
     setSubmitting(true);
@@ -93,10 +124,21 @@ const EditCar: React.FC = () => {
         model: m,
         year: Number(y),
         pricePerDay: Number(p),
+        type: carTypeRef.current || undefined,
+        seats: seatsRef.current ? Number(seatsRef.current) : undefined,
         transmission: transmissionRef.current || undefined,
+        conditions: conditionsRef.current,
+        deposit: depositRef.current ? Number(depositRef.current) : undefined,
         description: descriptionRef.current.trim() || undefined,
-        phone: phoneRef.current.trim() || undefined,
+        phone: contactRef.current.phone.trim() || undefined,
+        whatsapp: contactRef.current.whatsapp.trim() || undefined,
+        telegram: contactRef.current.telegram.trim() || undefined,
+        vk: contactRef.current.vk.trim() || undefined,
         address: pickerLocation?.address,
+        location: pickerLocation?.city,
+        city: pickerLocation?.city,
+        district: pickerLocation?.district,
+        region: pickerLocation?.region,
         lat: pickerLocation?.lat,
         lng: pickerLocation?.lng,
         photos,
@@ -106,15 +148,6 @@ const EditCar: React.FC = () => {
       setError('Ошибка при сохранении. Попробуйте ещё раз.');
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      await deleteCar(Number(id));
-      history.replace('/my-cars');
-    } catch {
-      setError('Ошибка при удалении.');
     }
   };
 
@@ -171,6 +204,21 @@ const EditCar: React.FC = () => {
             </IonItem>
 
             <IonItem>
+              <IonLabel position="stacked">Тип кузова <span className="add-car-required">*</span></IonLabel>
+              <IonSelect
+                placeholder="Выберите тип"
+                value={carType}
+                onIonChange={(e) => { const v = e.detail.value ?? ''; setCarType(v); carTypeRef.current = v; }}
+                interface="action-sheet"
+                cancelText="Отмена"
+              >
+                {CAR_TYPES.map((t) => (
+                  <IonSelectOption key={t} value={t}>{t}</IonSelectOption>
+                ))}
+              </IonSelect>
+            </IonItem>
+
+            <IonItem>
               <IonLabel position="stacked">Год выпуска <span className="add-car-required">*</span></IonLabel>
               <IonInput
                 type="number"
@@ -193,41 +241,67 @@ const EditCar: React.FC = () => {
             </IonItem>
 
             <IonItem>
+              <IonLabel position="stacked">Количество мест</IonLabel>
+              <IonInput
+                type="number"
+                inputmode="numeric"
+                placeholder="Например: 5"
+                value={seats}
+                onIonChange={(e) => { const v = e.detail.value ?? ''; setSeats(v); seatsRef.current = v; }}
+              />
+            </IonItem>
+
+            <IonItem>
               <IonLabel position="stacked">Коробка передач</IonLabel>
               <IonSelect
                 placeholder="Выберите тип"
                 value={transmission}
                 onIonChange={(e) => { const v = e.detail.value ?? ''; setTransmission(v); transmissionRef.current = v; }}
+                interface="action-sheet"
+                cancelText="Отмена"
               >
-                <IonSelectOption value="auto">Автомат</IonSelectOption>
-                <IonSelectOption value="manual">Механика</IonSelectOption>
-                <IonSelectOption value="robot">Робот</IonSelectOption>
+                <IonSelectOption value="автомат">Автомат</IonSelectOption>
+                <IonSelectOption value="механика">Механика</IonSelectOption>
+                <IonSelectOption value="робот">Робот</IonSelectOption>
               </IonSelect>
             </IonItem>
 
             <IonItem>
-              <IonLabel position="stacked">Телефон для связи</IonLabel>
+              <IonLabel position="stacked">Залог (₽)</IonLabel>
               <IonInput
-                type="tel"
-                inputmode="tel"
-                placeholder="Например: +7 900 000 00 00"
-                value={phone}
-                onIonChange={(e) => { const v = e.detail.value ?? ''; setPhone(v); phoneRef.current = v; }}
+                type="number"
+                inputmode="numeric"
+                placeholder="Например: 5000"
+                value={deposit}
+                onIonChange={(e) => { const v = e.detail.value ?? ''; setDeposit(v); depositRef.current = v; }}
               />
             </IonItem>
 
-            <LocationPicker value={pickerLocation} onChange={setPickerLocation} />
+            <LocationPicker value={pickerLocation} onChange={setPickerLocation} required />
+          </IonList>
 
+          <IonList className="add-car-form" style={{ marginTop: 16 }}>
+            <IonItem lines="none">
+              <IonLabel position="stacked">Условия аренды</IonLabel>
+            </IonItem>
+            {CONDITIONS_OPTIONS.map((item) => (
+              <CheckboxRow key={item} label={item} checked={conditions.includes(item)} onChange={() => toggleCondition(item)} />
+            ))}
+          </IonList>
+
+          <IonList className="add-car-form" style={{ marginTop: 16 }}>
             <IonItem>
               <IonLabel position="stacked">Описание</IonLabel>
               <IonTextarea
-                placeholder="Расскажите подробнее об автомобиле..."
+                placeholder="Ваше описание об автомобиле..."
                 rows={4}
                 value={description}
                 onIonChange={(e) => { const v = e.detail.value ?? ''; setDescription(v); descriptionRef.current = v; }}
               />
             </IonItem>
           </IonList>
+
+          <ContactSection contacts={contacts} onChange={updateContact} phoneKey={phoneKey} errors={contactErrors} />
 
           {error && (
             <div className="add-car-error">
@@ -242,23 +316,9 @@ const EditCar: React.FC = () => {
             <IonButton expand="block" fill="outline" onClick={() => history.goBack()}>
               Отмена
             </IonButton>
-            <IonButton expand="block" fill="outline" color="danger" onClick={() => setShowDeleteAlert(true)}>
-              Удалить объявление
-            </IonButton>
           </div>
         </div>
       </IonContent>
-
-      <IonAlert
-        isOpen={showDeleteAlert}
-        header="Удалить объявление?"
-        message="Это действие нельзя отменить."
-        buttons={[
-          { text: 'Отмена', role: 'cancel', handler: () => setShowDeleteAlert(false) },
-          { text: 'Удалить', role: 'destructive', handler: handleDelete },
-        ]}
-        onDidDismiss={() => setShowDeleteAlert(false)}
-      />
     </IonPage>
   );
 };

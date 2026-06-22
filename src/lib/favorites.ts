@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { apiFetch, buildQuery } from './apiClient';
 
 export type FavoriteType = 'house' | 'car' | 'tour';
 
@@ -35,42 +35,35 @@ export const localFavorites = {
   },
 };
 
+// Избранное авторизованного пользователя — на бэкенде, пользователь определяется по JWT
 export const dbFavorites = {
-  getAll: async (userId: string): Promise<FavoriteItem[]> => {
-    const { data, error } = await supabase
-      .from('favorites')
-      .select('item_type, item_id')
-      .eq('user_id', userId);
-    if (error) return [];
-    return data.map((row) => ({ type: row.item_type as FavoriteType, id: row.item_id as number }));
+  getAll: async (): Promise<FavoriteItem[]> => {
+    try {
+      return await apiFetch<FavoriteItem[]>('/favorites');
+    } catch {
+      return [];
+    }
   },
 
-  add: async (userId: string, item: FavoriteItem): Promise<void> => {
-    await supabase.from('favorites').upsert(
-      { user_id: userId, item_type: item.type, item_id: item.id },
-      { onConflict: 'user_id,item_type,item_id' }
-    );
+  add: async (item: FavoriteItem): Promise<void> => {
+    await apiFetch('/favorites', {
+      method: 'POST',
+      body: JSON.stringify({ item_type: item.type, item_id: item.id }),
+    }).catch(() => {});
   },
 
-  remove: async (userId: string, type: FavoriteType, id: number): Promise<void> => {
-    await supabase
-      .from('favorites')
-      .delete()
-      .eq('user_id', userId)
-      .eq('item_type', type)
-      .eq('item_id', id);
+  remove: async (type: FavoriteType, id: number): Promise<void> => {
+    await apiFetch(`/favorites${buildQuery({ item_type: type, item_id: id })}`, {
+      method: 'DELETE',
+    }).catch(() => {});
   },
 
-  migrate: async (userId: string, items: FavoriteItem[]): Promise<void> => {
+  migrate: async (items: FavoriteItem[]): Promise<void> => {
     if (items.length === 0) return;
-    const rows = items.map((item) => ({
-      user_id: userId,
-      item_type: item.type,
-      item_id: item.id,
-    }));
-    await supabase
-      .from('favorites')
-      .upsert(rows, { onConflict: 'user_id,item_type,item_id' });
+    await apiFetch('/favorites/migrate', {
+      method: 'POST',
+      body: JSON.stringify({ items: items.map((i) => ({ item_type: i.type, item_id: i.id })) }),
+    });
     localFavorites.clear();
   },
 };

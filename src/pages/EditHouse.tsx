@@ -12,43 +12,60 @@ import {
   IonLabel,
   IonInput,
   IonTextarea,
+  IonSelect,
+  IonSelectOption,
   IonButton,
   IonText,
-  IonAlert,
   useIonViewWillEnter,
 } from '@ionic/react';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
-import { getHouse, updateHouse, deleteHouse, House } from '../lib/api';
+import { getHouse, updateHouse, fetchHouseTypes, House } from '../lib/api';
 import { chevronBackOutline } from 'ionicons/icons';
 import LocationPicker from '../components/LocationPicker';
 import PhotoUpload from '../components/PhotoUpload';
+import ContactSection from '../components/ContactSection';
+import CheckboxRow from '../components/CheckboxRow';
+import { useContactFields } from '../lib/useContactFields';
 import './AddHouse.css';
+
+
+const AMENITIES_OPTIONS = [
+  'Wi-Fi', 'Кухня', 'Стиральная машина', 'Кондиционер',
+  'Отопление', 'Горячая вода', 'Парковка', 'Мангал/беседка',
+];
 
 const EditHouse: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const history = useHistory();
   const routerLocation = useLocation();
   const returnPath = new URLSearchParams(routerLocation.search).get('from') ?? '/my-houses';
+  const { contacts, contactRef, contactErrors, updateContact, loadContacts, validateContacts, phoneKey } = useContactFields();
 
   const [house, setHouse] = useState<House | null>(null);
+  const [houseTypes, setHouseTypes] = useState<string[]>([]);
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
+  const [houseType, setHouseType] = useState('');
   const [rooms, setRooms] = useState('');
   const [guests, setGuests] = useState('');
+  const [amenities, setAmenities] = useState<string[]>([]);
   const [description, setDescription] = useState('');
-  const [phone, setPhone] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
-  const [location, setLocation] = useState<{ address: string; lat: number; lng: number } | null>(null);
+  const [locationPicker, setLocationPicker] = useState<import('../components/LocationPicker').LocationValue | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
 
   const nameRef = useRef('');
   const priceRef = useRef('');
+  const houseTypeRef = useRef('');
   const roomsRef = useRef('');
   const guestsRef = useRef('');
+  const amenitiesRef = useRef<string[]>([]);
   const descriptionRef = useRef('');
-  const phoneRef = useRef('');
+
+  React.useEffect(() => {
+    fetchHouseTypes().then(setHouseTypes);
+  }, []);
 
   useIonViewWillEnter(() => {
     getHouse(Number(id)).then((found) => {
@@ -56,30 +73,45 @@ const EditHouse: React.FC = () => {
       setHouse(found);
       setName(found.name); nameRef.current = found.name;
       setPrice(String(found.pricePerNight)); priceRef.current = String(found.pricePerNight);
+      const ht = found.houseType ?? ''; setHouseType(ht); houseTypeRef.current = ht;
       setRooms(found.rooms != null ? String(found.rooms) : ''); roomsRef.current = found.rooms != null ? String(found.rooms) : '';
       setGuests(found.guests != null ? String(found.guests) : ''); guestsRef.current = found.guests != null ? String(found.guests) : '';
+      const am = found.amenities ?? []; setAmenities(am); amenitiesRef.current = am;
       setDescription(found.description ?? ''); descriptionRef.current = found.description ?? '';
-      setPhone(found.phone ?? ''); phoneRef.current = found.phone ?? '';
-      setLocation(
+      loadContacts({
+        phone: found.phone ?? '',
+        whatsapp: found.whatsapp ?? '',
+        telegram: found.telegram ?? '',
+        vk: found.vk ?? '',
+      }, found.phone || 'loaded');
+      setLocationPicker(
         found.lat != null && found.lng != null
-          ? { address: found.location ?? '', lat: found.lat, lng: found.lng }
+          ? { address: found.address ?? '', city: found.city ?? found.location, district: found.district, region: found.region, lat: found.lat, lng: found.lng }
           : null
       );
       setPhotos(found.photos ?? []);
     });
   });
 
+  const toggleAmenity = (item: string) => {
+    const next = amenitiesRef.current.includes(item)
+      ? amenitiesRef.current.filter((i) => i !== item)
+      : [...amenitiesRef.current, item];
+    setAmenities(next);
+    amenitiesRef.current = next;
+  };
+
   const handleSave = async () => {
     const n = nameRef.current.trim();
     const p = priceRef.current;
     const r = roomsRef.current;
-    const g = guestsRef.current;
-    const d = descriptionRef.current.trim();
-    const ph = phoneRef.current.trim();
 
     if (!n) { setError('Укажите название'); return; }
+    if (!houseTypeRef.current) { setError('Укажите тип жилья'); return; }
     if (!p || isNaN(Number(p))) { setError('Укажите цену аренды'); return; }
+    if (!locationPicker) { setError('Укажите местоположение'); return; }
     if (!r || isNaN(Number(r))) { setError('Укажите количество комнат'); return; }
+    if (!validateContacts()) return;
 
     setError(null);
     setSubmitting(true);
@@ -87,13 +119,22 @@ const EditHouse: React.FC = () => {
       await updateHouse(Number(id), {
         name: n,
         pricePerNight: Number(p),
+        houseType: houseTypeRef.current,
         rooms: Number(r),
-        guests: g && !isNaN(Number(g)) ? Number(g) : null,
-        description: d,
-        phone: ph || undefined,
-        location: location?.address,
-        lat: location?.lat,
-        lng: location?.lng,
+        guests: Number(guestsRef.current),
+        amenities: amenitiesRef.current,
+        description: descriptionRef.current.trim(),
+        phone: contactRef.current.phone.trim() || undefined,
+        whatsapp: contactRef.current.whatsapp.trim() || undefined,
+        telegram: contactRef.current.telegram.trim() || undefined,
+        vk: contactRef.current.vk.trim() || undefined,
+        address: locationPicker?.address,
+        location: locationPicker?.city,
+        city: locationPicker?.city,
+        district: locationPicker?.district,
+        region: locationPicker?.region,
+        lat: locationPicker?.lat,
+        lng: locationPicker?.lng,
         photos,
       });
       history.replace(returnPath);
@@ -101,15 +142,6 @@ const EditHouse: React.FC = () => {
       setError('Ошибка при сохранении. Попробуйте ещё раз.');
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      await deleteHouse(Number(id));
-      history.replace('/my-houses');
-    } catch {
-      setError('Ошибка при удалении.');
     }
   };
 
@@ -157,6 +189,21 @@ const EditHouse: React.FC = () => {
             </IonItem>
 
             <IonItem>
+              <IonLabel position="stacked">Тип жилья <span className="add-house-required">*</span></IonLabel>
+              <IonSelect
+                placeholder="Выберите тип"
+                value={houseType}
+                onIonChange={(e) => { const v = e.detail.value ?? ''; setHouseType(v); houseTypeRef.current = v; }}
+                interface="action-sheet"
+                cancelText="Отмена"
+              >
+                {houseTypes.map((t) => (
+                  <IonSelectOption key={t} value={t}>{t}</IonSelectOption>
+                ))}
+              </IonSelect>
+            </IonItem>
+
+            <IonItem>
               <IonLabel position="stacked">Цена аренды (₽/ночь) <span className="add-house-required">*</span></IonLabel>
               <IonInput
                 type="number"
@@ -189,29 +236,31 @@ const EditHouse: React.FC = () => {
               />
             </IonItem>
 
-            <IonItem>
-              <IonLabel position="stacked">Телефон для связи</IonLabel>
-              <IonInput
-                type="tel"
-                inputmode="tel"
-                placeholder="Например: +7 900 000 00 00"
-                value={phone}
-                onIonChange={(e) => { const v = e.detail.value ?? ''; setPhone(v); phoneRef.current = v; }}
-              />
+            <LocationPicker value={locationPicker} onChange={setLocationPicker} required />
+          </IonList>
+
+          <IonList className="add-house-form">
+            <IonItem lines="none">
+              <IonLabel position="stacked">Удобства</IonLabel>
             </IonItem>
+            {AMENITIES_OPTIONS.map((item) => (
+              <CheckboxRow key={item} label={item} checked={amenities.includes(item)} onChange={() => toggleAmenity(item)} />
+            ))}
+          </IonList>
 
-            <LocationPicker value={location} onChange={setLocation} />
-
+          <IonList className="add-house-form" style={{ marginTop: 16 }}>
             <IonItem>
               <IonLabel position="stacked">Описание</IonLabel>
               <IonTextarea
-                placeholder="Расскажите подробнее о доме..."
+                placeholder="Ваше описание о доме..."
                 rows={4}
                 value={description}
                 onIonChange={(e) => { const v = e.detail.value ?? ''; setDescription(v); descriptionRef.current = v; }}
               />
             </IonItem>
           </IonList>
+
+          <ContactSection contacts={contacts} onChange={updateContact} phoneKey={phoneKey} errors={contactErrors} />
 
           {error && (
             <div className="add-house-error">
@@ -226,23 +275,9 @@ const EditHouse: React.FC = () => {
             <IonButton expand="block" fill="outline" onClick={() => history.goBack()}>
               Отмена
             </IonButton>
-            <IonButton expand="block" fill="outline" color="danger" onClick={() => setShowDeleteAlert(true)}>
-              Удалить объявление
-            </IonButton>
           </div>
         </div>
       </IonContent>
-
-      <IonAlert
-        isOpen={showDeleteAlert}
-        header="Удалить объявление?"
-        message="Это действие нельзя отменить."
-        buttons={[
-          { text: 'Отмена', role: 'cancel', handler: () => setShowDeleteAlert(false) },
-          { text: 'Удалить', role: 'destructive', handler: handleDelete },
-        ]}
-        onDidDismiss={() => setShowDeleteAlert(false)}
-      />
     </IonPage>
   );
 };

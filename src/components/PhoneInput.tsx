@@ -25,20 +25,34 @@ const getPlaceholder = (mask: string | string[]): string => {
   return m.replace(/9/g, '_');
 };
 
+const parseInitialValue = (val: string): { country: Country; digits: string } => {
+  if (!val) return { country: RUSSIA, digits: '' };
+  const normalized = val.startsWith('+') ? val : '+' + val;
+  const sorted = [...countries].sort((a, b) => b.code.length - a.code.length);
+  const match = sorted.find(c => normalized.startsWith(c.code));
+  if (match) {
+    return { country: match, digits: normalized.slice(match.code.length).replace(/\D/g, '') };
+  }
+  return { country: RUSSIA, digits: val.replace(/\D/g, '') };
+};
+
 interface PhoneInputProps {
-  value: string;
+  value?: string;
   onChange: (fullNumber: string) => void;
   disabled?: boolean;
 }
 
-const PhoneInput: React.FC<PhoneInputProps> = ({ value, onChange, disabled }) => {
-  const [country, setCountry] = useState<Country>(RUSSIA);
-  const [digits, setDigits] = useState('');
+const PhoneInput: React.FC<PhoneInputProps> = ({ value = '', onChange, disabled }) => {
+  const parsed = parseInitialValue(value);
+  const [country, setCountry] = useState<Country>(parsed.country);
+  const [digits, setDigits] = useState(parsed.digits);
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const skipFirst = useRef(true);
 
   useEffect(() => {
+    if (skipFirst.current) { skipFirst.current = false; return; }
     const raw = digits.replace(/\D/g, '');
     onChange(country.code + raw);
   }, [digits, country]);

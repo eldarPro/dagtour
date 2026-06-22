@@ -17,19 +17,19 @@ import {
   IonAlert,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
+  IonRefresher,
+  IonRefresherContent,
   useIonViewWillEnter,
-  useIonViewWillLeave,
 } from '@ionic/react';
-import { listOutline, mapOutline, optionsOutline, addOutline, bookmarkOutline, bookmark } from 'ionicons/icons';
+import { listOutline, mapOutline, optionsOutline, addOutline } from 'ionicons/icons';
 import HouseCard, { HouseCardData } from '../components/HouseCard';
 import { HouseCardSkeleton } from '../components/CardSkeletons';
 import HousesMap, { MapHouseItem } from '../components/HousesMap';
 import HousesFilterModal from '../components/HousesFilterModal';
-import { getHousesFiltered, getMyHouses, getMaxPrice, getHouseLocations, House } from '../lib/api';
+import { getHousesFiltered, getMyHouses, getMaxPrice, getHousePins, updateHouse, deleteHouse, House } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useAuthGuard } from '../hooks/useAuthGuard';
-import { HouseFilters, DEFAULT_FILTERS, isFiltersActive } from '../data/houseFilters';
-import { useFavorites } from '../lib/favoritesContext';
+import { HouseFilters, DEFAULT_FILTERS, isFiltersActive, applyFilters } from '../data/houseFilters';
 import './Houses.css';
 
 type ViewMode = 'list' | 'map';
@@ -45,36 +45,53 @@ const houseToCardData = (h: House): HouseCardData => ({
   rating: h.rating,
   rooms: h.rooms,
   guests: h.guests ?? undefined,
+  active: h.active,
 });
 
 const Houses: React.FC = () => {
   const { user } = useAuth();
   const { navigate: addHouse, showAlert, setShowAlert, goToLogin } = useAuthGuard('/add-house');
-  const { favorites } = useFavorites();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [filters, setFilters] = useState<HouseFilters>(DEFAULT_FILTERS);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [myHouses, setMyHouses] = useState<House[]>([]);
   const [otherHouses, setOtherHouses] = useState<House[]>([]);
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
   const [priceMax, setPriceMax] = useState(0);
-  const [locations, setLocations] = useState<string[]>(['Все']);
+  const [mapPins, setMapPins] = useState<MapHouseItem[]>([]);
 
-  useIonViewWillLeave(() => setFavoritesOnly(false));
+  const loadMapPins = useCallback(async (currentFilters: HouseFilters) => {
+    const lf = currentFilters.locationFilter;
+    const pins = await getHousePins({
+      city: lf.city,
+      district: !lf.city ? lf.district : undefined,
+      citiesInDistrict: !lf.city ? lf.citiesInDistrict : undefined,
+      houseType: currentFilters.houseType,
+      priceMin: currentFilters.priceMin,
+      priceMax: currentFilters.priceMax,
+      minRooms: currentFilters.minRooms,
+      minGuests: currentFilters.minGuests,
+      sort: currentFilters.sort,
+    });
+    setMapPins(pins.map((p) => ({ id: p.id, pricePerNight: p.pricePerNight, lat: p.lat, lng: p.lng, name: p.name, photo: p.photo, location: p.location, rooms: p.rooms, guests: p.guests })));
+  }, []);
 
   const loadOtherHouses = useCallback(async (currentFilters: HouseFilters, currentOffset: number, userId?: string) => {
+    const lf = currentFilters.locationFilter;
     const { data, hasMore: more } = await getHousesFiltered(
       {
-        location: currentFilters.location,
+        city: lf.city,
+        district: !lf.city ? lf.district : undefined,
+        citiesInDistrict: !lf.city ? lf.citiesInDistrict : undefined,
+        houseType: currentFilters.houseType,
         priceMin: currentFilters.priceMin,
         priceMax: currentFilters.priceMax,
         minRooms: currentFilters.minRooms,
-        minRating: currentFilters.minRating,
         minGuests: currentFilters.minGuests,
         excludeUserId: userId,
+        sort: currentFilters.sort,
       },
       currentOffset,
       PAGE_SIZE,
@@ -91,16 +108,16 @@ const Houses: React.FC = () => {
   useIonViewWillEnter(() => {
     setLoading(true);
     const userId = user?.id;
+    const currentFilters = filters;
     Promise.all([
       getMaxPrice('houses_max_price'),
-      getHouseLocations(),
-      userId ? getMyHouses(userId) : Promise.resolve([]),
-      loadOtherHouses(DEFAULT_FILTERS, 0, userId),
+      userId ? getMyHouses() : Promise.resolve([]),
+      loadOtherHouses(currentFilters, 0, userId),
+      loadMapPins(currentFilters),
     ])
-      .then(([max, locs, my]) => {
+      .then(([max, my]) => {
         setPriceMax(max);
-        setLocations(locs);
-        setMyHouses(my);
+        setMyHouses(my as House[]);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -110,34 +127,34 @@ const Houses: React.FC = () => {
     setFilters(newFilters);
     setOffset(0);
     loadOtherHouses(newFilters, 0, user?.id).catch(console.error);
+    loadMapPins(newFilters).catch(console.error);
   };
 
   const handleReset = () => {
-    const reset = { ...DEFAULT_FILTERS, priceMax };
-    handleApplyFilters(reset);
+    handleApplyFilters(DEFAULT_FILTERS);
   };
 
-  const favoriteHouseIds = new Set(favorites.filter((f) => f.type === 'house').map((f) => f.id));
+  const handleRefresh = async (e: CustomEvent) => {
+    const userId = user?.id;
+    setOffset(0);
+    await Promise.all([
+      getMaxPrice('houses_max_price').then(setPriceMax),
+      userId ? getMyHouses().then(setMyHouses) : Promise.resolve(),
+      loadOtherHouses(filters, 0, userId),
+      loadMapPins(filters),
+    ]).catch(console.error);
+    (e.target as HTMLIonRefresherElement).complete();
+  };
 
-  const filteredOwn = myHouses.filter(
-    (h) =>
-      h.pricePerNight >= filters.priceMin &&
-      h.pricePerNight <= filters.priceMax &&
-      (!favoritesOnly || favoriteHouseIds.has(h.id))
-  );
-  const visibleOther = favoritesOnly
-    ? otherHouses.filter((h) => favoriteHouseIds.has(h.id))
-    : otherHouses;
-  const allVisible = [...filteredOwn, ...visibleOther];
+  const filteredOwn = applyFilters(myHouses, filters);
+  const allVisible = [...filteredOwn, ...otherHouses];
   const hasActiveFilters = isFiltersActive(filters);
 
-  const mapItems: MapHouseItem[] = visibleOther
-    .filter((h) => h.lat != null && h.lng != null)
-    .map((h) => ({ id: h.id, name: h.name, pricePerNight: h.pricePerNight, lat: h.lat!, lng: h.lng! }));
-
-  const ownMapItems: MapHouseItem[] = filteredOwn
-    .filter((h) => h.lat != null && h.lng != null)
-    .map((h) => ({ id: h.id, name: h.name, pricePerNight: h.pricePerNight, lat: h.lat!, lng: h.lng! }));
+  const lf = filters.locationFilter;
+  const mapUserLocation =
+    lf.lat != null && lf.lng != null
+      ? { lat: lf.lat, lng: lf.lng, zoom: lf.city ? 12 : lf.district ? 9 : 7 }
+      : undefined;
 
   return (
     <IonPage>
@@ -145,9 +162,6 @@ const Houses: React.FC = () => {
         <IonToolbar>
           <IonTitle>Аренда домов</IonTitle>
           <IonButtons slot="end">
-            <IonButton fill="clear" onClick={() => setFavoritesOnly((v) => !v)} className="filter-icon-btn">
-              <IonIcon icon={favoritesOnly ? bookmark : bookmarkOutline} style={favoritesOnly ? { color: '#ef4444' } : undefined} />
-            </IonButton>
             <IonButton fill="clear" onClick={() => setFilterOpen(true)} className="filter-icon-btn">
               <IonIcon icon={optionsOutline} />
               {hasActiveFilters && <span className="filter-badge" />}
@@ -174,6 +188,9 @@ const Houses: React.FC = () => {
 
       {viewMode === 'list' ? (
         <IonContent fullscreen className="list-content">
+          <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+            <IonRefresherContent />
+          </IonRefresher>
           {loading ? (
             <IonList lines="none" className="card-list">
               {Array.from({ length: 4 }).map((_, i) => <HouseCardSkeleton key={i} />)}
@@ -189,8 +206,28 @@ const Houses: React.FC = () => {
             <IonList lines="none" className="card-list">
               {allVisible.map((house) => {
                 const isOwn = house.userId === user?.id;
+                const handleToggleActive = isOwn ? async () => {
+                  const id = house.id; const next = !house.active;
+                  setMyHouses(prev => prev.map(h => h.id === id ? { ...h, active: next } : h));
+                  setOtherHouses(prev => prev.map(h => h.id === id ? { ...h, active: next } : h));
+                  try { await updateHouse(id, { active: next }); } catch (err) { console.error(err); }
+                } : undefined;
+                const handleDelete = isOwn ? async () => {
+                  const id = house.id;
+                  setMyHouses(prev => prev.filter(h => h.id !== id));
+                  setOtherHouses(prev => prev.filter(h => h.id !== id));
+                  try { await deleteHouse(id); } catch (err) { console.error(err); }
+                } : undefined;
                 return (
-                  <HouseCard key={house.id} house={houseToCardData(house)} href={`/houses/${house.id}`} isOwn={isOwn} showOwnBadge={isOwn} />
+                  <HouseCard
+                    key={house.id}
+                    house={houseToCardData(house)}
+                    href={`/houses/${house.id}`}
+                    isOwn={isOwn}
+                    showOwnBadge={isOwn}
+                    onToggleActive={handleToggleActive}
+                    onDelete={handleDelete}
+                  />
                 );
               })}
             </IonList>
@@ -211,8 +248,8 @@ const Houses: React.FC = () => {
           </IonFab>
         </IonContent>
       ) : (
-        <IonContent fullscreen className="map-content">
-          <HousesMap houses={[...ownMapItems, ...mapItems]} />
+        <IonContent className="map-content">
+          <HousesMap houses={mapPins} userLocation={mapUserLocation} />
           <IonFab vertical="bottom" horizontal="end" slot="fixed">
             <IonFabButton onClick={addHouse}>
               <IonIcon icon={addOutline} />
@@ -225,7 +262,6 @@ const Houses: React.FC = () => {
         isOpen={filterOpen}
         filters={filters}
         priceMax={priceMax}
-        locations={locations}
         onClose={() => setFilterOpen(false)}
         onApply={handleApplyFilters}
       />

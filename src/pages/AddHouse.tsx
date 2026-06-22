@@ -12,43 +12,72 @@ import {
   IonLabel,
   IonInput,
   IonTextarea,
+  IonSelect,
+  IonSelectOption,
   IonButton,
   IonText,
 } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
-import { createHouse } from '../lib/api';
+import { createHouse, fetchHouseTypes } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { chevronBackOutline } from 'ionicons/icons';
 import LocationPicker from '../components/LocationPicker';
 import PhotoUpload from '../components/PhotoUpload';
+import ContactSection from '../components/ContactSection';
+import CheckboxRow from '../components/CheckboxRow';
+import { useContactFields } from '../lib/useContactFields';
 import { useUserPhone } from '../lib/useUserPhone';
 import './AddHouse.css';
+
+const AMENITIES_OPTIONS = [
+  'Wi-Fi', 'Кухня', 'Стиральная машина', 'Кондиционер',
+  'Отопление', 'Горячая вода', 'Парковка', 'Мангал/беседка',
+];
 
 const AddHouse: React.FC = () => {
   const history = useHistory();
   const { user } = useAuth();
   const userPhone = useUserPhone();
+  const { contacts, contactErrors, updateContact, validateContacts, phoneKey, setPhoneKey } = useContactFields();
 
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
+  const [houseType, setHouseType] = useState('');
   const [rooms, setRooms] = useState('');
   const [guests, setGuests] = useState('');
+  const [amenities, setAmenities] = useState<string[]>([]);
   const [description, setDescription] = useState('');
-  const [phone, setPhone] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [location, setLocation] = useState<{ address: string; lat: number; lng: number } | null>(null);
+  const [locationPicker, setLocationPicker] = useState<import('../components/LocationPicker').LocationValue | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
+  const [houseTypes, setHouseTypes] = useState<string[]>([]);
 
   useEffect(() => {
-    if (userPhone) setPhone(prev => prev || userPhone);
+    fetchHouseTypes().then(setHouseTypes);
+  }, []);
+
+  useEffect(() => {
+    if (userPhone && !phoneKey) {
+      updateContact('phone', userPhone);
+      setPhoneKey(userPhone);
+    }
   }, [userPhone]);
+
+  const toggleAmenity = (item: string) => {
+    setAmenities((prev) =>
+      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
+    );
+  };
 
   const handleSubmit = async () => {
     if (!name.trim()) { setError('Укажите название'); return; }
+    if (!houseType) { setError('Укажите тип жилья'); return; }
     if (!price || isNaN(Number(price))) { setError('Укажите цену аренды'); return; }
+    if (!locationPicker) { setError('Укажите местоположение'); return; }
     if (!rooms || isNaN(Number(rooms))) { setError('Укажите количество комнат'); return; }
     if (!user) { setError('Необходимо войти в аккаунт'); return; }
+    if (!validateContacts()) return;
 
     setError(null);
     setSubmitting(true);
@@ -57,13 +86,22 @@ const AddHouse: React.FC = () => {
         userId: user.id,
         name: name.trim(),
         pricePerNight: Number(price),
+        houseType,
         rooms: Number(rooms),
-        guests: guests && !isNaN(Number(guests)) ? Number(guests) : null,
+        guests: Number(guests),
+        amenities,
         description: description.trim(),
-        phone: phone.trim() || undefined,
-        location: location?.address,
-        lat: location?.lat,
-        lng: location?.lng,
+        phone: contacts.phone.trim() || undefined,
+        whatsapp: contacts.whatsapp.trim() || undefined,
+        telegram: contacts.telegram.trim() || undefined,
+        vk: contacts.vk.trim() || undefined,
+        address: locationPicker?.address,
+        location: locationPicker?.city,
+        city: locationPicker?.city,
+        district: locationPicker?.district,
+        region: locationPicker?.region,
+        lat: locationPicker?.lat,
+        lng: locationPicker?.lng,
         photos,
       });
       history.goBack();
@@ -95,6 +133,21 @@ const AddHouse: React.FC = () => {
                 value={name}
                 onIonChange={(e) => setName(e.detail.value ?? '')}
               />
+            </IonItem>
+
+            <IonItem>
+              <IonLabel position="stacked">Тип жилья <span className="add-house-required">*</span></IonLabel>
+              <IonSelect
+                placeholder="Выберите тип"
+                value={houseType}
+                onIonChange={(e) => setHouseType(e.detail.value ?? '')}
+                interface="action-sheet"
+                cancelText="Отмена"
+              >
+                {houseTypes.map((t) => (
+                  <IonSelectOption key={t} value={t}>{t}</IonSelectOption>
+                ))}
+              </IonSelect>
             </IonItem>
 
             <IonItem>
@@ -130,29 +183,31 @@ const AddHouse: React.FC = () => {
               />
             </IonItem>
 
-            <IonItem>
-              <IonLabel position="stacked">Телефон для связи</IonLabel>
-              <IonInput
-                type="tel"
-                inputmode="tel"
-                placeholder="Например: +7 900 000 00 00"
-                value={phone}
-                onIonChange={(e) => setPhone(e.detail.value ?? '')}
-              />
+            <LocationPicker value={locationPicker} onChange={setLocationPicker} required />
+          </IonList>
+
+          <IonList className="add-house-form" style={{ marginTop: 16 }}>
+            <IonItem lines="none">
+              <IonLabel position="stacked">Удобства</IonLabel>
             </IonItem>
+            {AMENITIES_OPTIONS.map((item) => (
+              <CheckboxRow key={item} label={item} checked={amenities.includes(item)} onChange={() => toggleAmenity(item)} />
+            ))}
+          </IonList>
 
-            <LocationPicker value={location} onChange={setLocation} />
-
+          <IonList className="add-house-form" style={{ marginTop: 16 }}>
             <IonItem>
               <IonLabel position="stacked">Описание</IonLabel>
               <IonTextarea
-                placeholder="Расскажите подробнее о доме..."
+                placeholder="Ваше описание о доме..."
                 rows={4}
                 value={description}
                 onIonChange={(e) => setDescription(e.detail.value ?? '')}
               />
             </IonItem>
           </IonList>
+
+          <ContactSection contacts={contacts} onChange={updateContact} phoneKey={phoneKey} errors={contactErrors} />
 
           {error && (
             <div className="add-house-error">

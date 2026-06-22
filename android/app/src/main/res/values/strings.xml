@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DagTour</string>
+    <string name="title_activity_main">DagTour</string>
+    <string name="package_name">com.dagtour.app</string>
+    <string name="custom_url_scheme">com.dagtour.app</string>
+</resources>

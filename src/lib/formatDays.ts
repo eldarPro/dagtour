@@ -1,6 +1,4 @@
-export function formatDays(value: string): string {
-  const n = parseInt(value, 10);
-  if (isNaN(n)) return value;
+export function formatDays(n: number): string {
   const mod10 = n % 10;
   const mod100 = n % 100;
   if (mod10 === 1 && mod100 !== 11) return `${n} день`;

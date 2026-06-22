@@ -1,0 +1,15 @@
+.social-links-row {
+  cursor: default;
+}
+
+.social-links-icons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.social-links-icons a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

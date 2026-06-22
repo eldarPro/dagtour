@@ -10,13 +10,15 @@ import {
   IonButton,
   IonIcon,
   IonList,
+  IonRefresher,
+  IonRefresherContent,
   useIonViewWillEnter,
 } from '@ionic/react';
 import { addOutline, homeOutline, chevronBackOutline } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import HouseCard, { HouseCardData } from '../components/HouseCard';
 import { HouseCardSkeleton } from '../components/CardSkeletons';
-import { getMyHouses, House } from '../lib/api';
+import { getMyHouses, updateHouse, deleteHouse, House } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import './MyHouses.css';
 
@@ -28,6 +30,7 @@ const toCardData = (house: House): HouseCardData => ({
   location: house.location,
   rooms: house.rooms,
   guests: house.guests ?? undefined,
+  active: house.active,
 });
 
 const MyHouses: React.FC = () => {
@@ -36,14 +39,49 @@ const MyHouses: React.FC = () => {
   const [houses, setHouses] = useState<House[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useIonViewWillEnter(() => {
+  const loadData = () => {
     if (!user) return;
     setLoading(true);
-    getMyHouses(user.id)
+    getMyHouses()
       .then(setHouses)
       .catch(console.error)
       .finally(() => setLoading(false));
-  });
+  };
+
+  useIonViewWillEnter(loadData);
+
+  const handleToggleActive = async (id: number, current: boolean) => {
+    setHouses(prev => prev.map(h => h.id === id ? { ...h, active: !current } : h));
+    try {
+      await updateHouse(id, { active: !current });
+    } catch (err) {
+      console.error(err);
+      loadData();
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    setHouses(prev => prev.filter(h => h.id !== id));
+    try {
+      await deleteHouse(id);
+    } catch (err) {
+      console.error(err);
+      loadData();
+    }
+  };
+
+  const handleRefresh = async (e: CustomEvent) => {
+    if (!user) { (e.target as HTMLIonRefresherElement).complete(); return; }
+    setLoading(true);
+    try {
+      setHouses(await getMyHouses());
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+      (e.target as HTMLIonRefresherElement).complete();
+    }
+  };
 
   return (
     <IonPage>
@@ -61,6 +99,9 @@ const MyHouses: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen className="my-houses-content">
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+          <IonRefresherContent />
+        </IonRefresher>
         {loading ? (
           <IonList lines="none" className="my-houses-list">
             {Array.from({ length: 4 }).map((_, i) => <HouseCardSkeleton key={i} />)}
@@ -84,7 +125,13 @@ const MyHouses: React.FC = () => {
         ) : (
           <IonList lines="none" className="my-houses-list">
             {houses.map((house) => (
-              <HouseCard key={house.id} house={toCardData(house)} isOwn />
+              <HouseCard
+                key={house.id}
+                house={toCardData(house)}
+                isOwn
+                onToggleActive={() => handleToggleActive(house.id, house.active ?? true)}
+                onDelete={() => handleDelete(house.id)}
+              />
             ))}
           </IonList>
         )}

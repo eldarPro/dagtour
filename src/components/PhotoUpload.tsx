@@ -10,7 +10,7 @@ interface Props {
   folder: string;
 }
 
-const MAX_PHOTOS = 5;
+const MAX_PHOTOS = 15;
 
 const PhotoUpload: React.FC<Props> = ({ photos, onChange, folder }) => {
   const inputRef = useRef<HTMLInputElement>(null);

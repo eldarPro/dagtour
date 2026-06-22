@@ -17,19 +17,19 @@ import {
   IonAlert,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
+  IonRefresher,
+  IonRefresherContent,
   useIonViewWillEnter,
-  useIonViewWillLeave,
 } from '@ionic/react';
-import { listOutline, mapOutline, optionsOutline, addOutline, bookmarkOutline, bookmark } from 'ionicons/icons';
+import { listOutline, mapOutline, optionsOutline, addOutline } from 'ionicons/icons';
 import CarCard, { CarCardData } from '../components/CarCard';
 import { CarCardSkeleton } from '../components/CardSkeletons';
 import CarsMap, { MapCarItem } from '../components/CarsMap';
-import { getCarsFiltered, getMyCars, getMaxPrice, Car } from '../lib/api';
+import { getCarsFiltered, getMyCars, getMaxPrice, getCarPins, updateCar, deleteCar, Car } from '../lib/api';
 import CarsFilterModal from '../components/CarsFilterModal';
 import { useAuth } from '../lib/auth';
 import { useAuthGuard } from '../hooks/useAuthGuard';
-import { CarFilters, DEFAULT_FILTERS, isFiltersActive } from '../data/carFilters';
-import { useFavorites } from '../lib/favoritesContext';
+import { CarFilters, DEFAULT_FILTERS, isFiltersActive, applyFilters } from '../data/carFilters';
 import './Cars.css';
 
 type ViewMode = 'list' | 'map';
@@ -49,31 +49,47 @@ const carToCardData = (car: Car): CarCardData => ({
   year: car.year,
   pricePerDay: car.pricePerDay,
   photo: car.photo,
+  location: car.location,
   type: car.type,
   seats: car.seats,
   transmission: car.transmission
     ? (TRANSMISSION_LABEL[car.transmission] ?? car.transmission)
     : undefined,
+  active: car.active,
 });
 
 const Cars: React.FC = () => {
   const { user } = useAuth();
   const { navigate: addCar, showAlert, setShowAlert, goToLogin } = useAuthGuard('/add-car');
-  const { favorites } = useFavorites();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [filters, setFilters] = useState<CarFilters>(DEFAULT_FILTERS);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [myCars, setMyCars] = useState<Car[]>([]);
   const [otherCars, setOtherCars] = useState<Car[]>([]);
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
   const [priceMax, setPriceMax] = useState(0);
+  const [mapPins, setMapPins] = useState<MapCarItem[]>([]);
 
-  useIonViewWillLeave(() => setFavoritesOnly(false));
+  const loadMapPins = useCallback(async (currentFilters: CarFilters) => {
+    const lf = currentFilters.locationFilter;
+    const pins = await getCarPins({
+      type: currentFilters.type,
+      transmission: currentFilters.transmission,
+      seatsMin: currentFilters.seatsMin,
+      priceMin: currentFilters.priceMin,
+      priceMax: currentFilters.priceMax,
+      city: lf.city,
+      district: !lf.city ? lf.district : undefined,
+      citiesInDistrict: !lf.city ? lf.citiesInDistrict : undefined,
+      sort: currentFilters.sort,
+    });
+    setMapPins(pins.map((p) => ({ id: p.id, pricePerDay: p.pricePerDay, lat: p.lat, lng: p.lng, name: p.name, photo: p.photo, location: p.location, seats: p.seats, transmission: p.transmission, year: p.year })));
+  }, []);
 
   const loadOtherCars = useCallback(async (currentFilters: CarFilters, currentOffset: number, userId?: string) => {
+    const lf = currentFilters.locationFilter;
     const { data, hasMore: more } = await getCarsFiltered(
       {
         type: currentFilters.type,
@@ -81,7 +97,11 @@ const Cars: React.FC = () => {
         seatsMin: currentFilters.seatsMin,
         priceMin: currentFilters.priceMin,
         priceMax: currentFilters.priceMax,
+        city: lf.city,
+        district: !lf.city ? lf.district : undefined,
+        citiesInDistrict: !lf.city ? lf.citiesInDistrict : undefined,
         excludeUserId: userId,
+        sort: currentFilters.sort,
       },
       currentOffset,
       PAGE_SIZE,
@@ -98,14 +118,16 @@ const Cars: React.FC = () => {
   useIonViewWillEnter(() => {
     setLoading(true);
     const userId = user?.id;
+    const currentFilters = filters;
     Promise.all([
       getMaxPrice('cars_max_price'),
-      userId ? getMyCars(userId) : Promise.resolve([]),
-      loadOtherCars(DEFAULT_FILTERS, 0, userId),
+      userId ? getMyCars() : Promise.resolve([]),
+      loadOtherCars(currentFilters, 0, userId),
+      loadMapPins(currentFilters),
     ])
       .then(([max, my]) => {
         setPriceMax(max);
-        setMyCars(my);
+        setMyCars(my as Car[]);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -115,34 +137,34 @@ const Cars: React.FC = () => {
     setFilters(newFilters);
     setOffset(0);
     loadOtherCars(newFilters, 0, user?.id).catch(console.error);
+    loadMapPins(newFilters).catch(console.error);
   };
 
   const handleReset = () => {
-    const reset = { ...DEFAULT_FILTERS, priceMax };
-    handleApplyFilters(reset);
+    handleApplyFilters(DEFAULT_FILTERS);
   };
 
-  const favoriteCarIds = new Set(favorites.filter((f) => f.type === 'car').map((f) => f.id));
+  const handleRefresh = async (e: CustomEvent) => {
+    const userId = user?.id;
+    setOffset(0);
+    await Promise.all([
+      getMaxPrice('cars_max_price').then(setPriceMax),
+      userId ? getMyCars().then(setMyCars) : Promise.resolve(),
+      loadOtherCars(filters, 0, userId),
+      loadMapPins(filters),
+    ]).catch(console.error);
+    (e.target as HTMLIonRefresherElement).complete();
+  };
 
-  const filteredOwn = myCars.filter(
-    (c) =>
-      c.pricePerDay >= filters.priceMin &&
-      c.pricePerDay <= filters.priceMax &&
-      (!favoritesOnly || favoriteCarIds.has(c.id))
-  );
-  const visibleOther = favoritesOnly
-    ? otherCars.filter((c) => favoriteCarIds.has(c.id))
-    : otherCars;
-  const allVisible = [...filteredOwn, ...visibleOther];
+  const filteredOwn = applyFilters(myCars, filters);
+  const allVisible = [...filteredOwn, ...otherCars];
   const hasActiveFilters = isFiltersActive(filters);
 
-  const mapItems: MapCarItem[] = visibleOther
-    .filter((c) => c.lat != null && c.lng != null)
-    .map((c) => ({ id: c.id, brand: c.brand, model: c.model, pricePerDay: c.pricePerDay, lat: c.lat!, lng: c.lng! }));
-
-  const ownMapItems: MapCarItem[] = filteredOwn
-    .filter((c) => c.lat != null && c.lng != null)
-    .map((c) => ({ id: c.id, brand: c.brand, model: c.model, pricePerDay: c.pricePerDay, lat: c.lat!, lng: c.lng! }));
+  const lf = filters.locationFilter;
+  const mapUserLocation =
+    lf.lat != null && lf.lng != null
+      ? { lat: lf.lat, lng: lf.lng, zoom: lf.city ? 12 : lf.district ? 9 : 7 }
+      : undefined;
 
   return (
     <IonPage>
@@ -150,9 +172,6 @@ const Cars: React.FC = () => {
         <IonToolbar>
           <IonTitle>Аренда авто</IonTitle>
           <IonButtons slot="end">
-            <IonButton fill="clear" onClick={() => setFavoritesOnly((v) => !v)} className="filter-icon-btn">
-              <IonIcon icon={favoritesOnly ? bookmark : bookmarkOutline} style={favoritesOnly ? { color: '#ef4444' } : undefined} />
-            </IonButton>
             <IonButton fill="clear" onClick={() => setFilterOpen(true)} className="filter-icon-btn">
               <IonIcon icon={optionsOutline} />
               {hasActiveFilters && <span className="filter-badge" />}
@@ -179,6 +198,9 @@ const Cars: React.FC = () => {
 
       {viewMode === 'list' ? (
         <IonContent fullscreen className="list-content">
+          <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+            <IonRefresherContent />
+          </IonRefresher>
           {loading ? (
             <IonList lines="none" className="card-list">
               {Array.from({ length: 4 }).map((_, i) => <CarCardSkeleton key={i} />)}
@@ -194,8 +216,28 @@ const Cars: React.FC = () => {
             <IonList lines="none" className="card-list">
               {allVisible.map((car) => {
                 const isOwn = car.userId === user?.id;
+                const handleToggleActive = isOwn ? async () => {
+                  const id = car.id; const next = !car.active;
+                  setMyCars(prev => prev.map(c => c.id === id ? { ...c, active: next } : c));
+                  setOtherCars(prev => prev.map(c => c.id === id ? { ...c, active: next } : c));
+                  try { await updateCar(id, { active: next }); } catch (err) { console.error(err); }
+                } : undefined;
+                const handleDelete = isOwn ? async () => {
+                  const id = car.id;
+                  setMyCars(prev => prev.filter(c => c.id !== id));
+                  setOtherCars(prev => prev.filter(c => c.id !== id));
+                  try { await deleteCar(id); } catch (err) { console.error(err); }
+                } : undefined;
                 return (
-                  <CarCard key={car.id} car={carToCardData(car)} href={`/cars/${car.id}`} isOwn={isOwn} showOwnBadge={isOwn} />
+                  <CarCard
+                    key={car.id}
+                    car={carToCardData(car)}
+                    href={`/cars/${car.id}`}
+                    isOwn={isOwn}
+                    showOwnBadge={isOwn}
+                    onToggleActive={handleToggleActive}
+                    onDelete={handleDelete}
+                  />
                 );
               })}
             </IonList>
@@ -216,8 +258,8 @@ const Cars: React.FC = () => {
           </IonFab>
         </IonContent>
       ) : (
-        <IonContent fullscreen className="map-content">
-          <CarsMap cars={[...ownMapItems, ...mapItems]} />
+        <IonContent className="map-content">
+          <CarsMap cars={mapPins} userLocation={mapUserLocation} />
           <IonFab vertical="bottom" horizontal="end" slot="fixed">
             <IonFabButton onClick={addCar}>
               <IonIcon icon={addOutline} />

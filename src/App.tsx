@@ -40,6 +40,9 @@ import AddTour from './pages/AddTour';
 import MyTours from './pages/MyTours';
 import EditTour from './pages/EditTour';
 import Favorites from './pages/Favorites';
+import EditProfile from './pages/EditProfile';
+import ReviewsPage from './pages/Reviews';
+import UserProfilePage from './pages/UserProfile';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -64,8 +67,6 @@ import '@ionic/react/css/display.css';
  * https://ionicframework.com/docs/theming/dark-mode
  */
 
-/* import '@ionic/react/css/palettes/dark.always.css'; */
-/* import '@ionic/react/css/palettes/dark.class.css'; */
 import '@ionic/react/css/palettes/dark.system.css';
 
 /* Theme variables */
@@ -131,6 +132,15 @@ const App: React.FC = () => (
           </Route>
           <Route exact path="/favorites">
             <Favorites />
+          </Route>
+          <Route exact path="/edit-profile">
+            <EditProfile />
+          </Route>
+          <Route exact path="/reviews/:itemType/:itemId">
+            <ReviewsPage />
+          </Route>
+          <Route exact path="/users/:id">
+            <UserProfilePage />
           </Route>
           <Route exact path="/">
             <Redirect to="/home" />

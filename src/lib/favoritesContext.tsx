@@ -25,8 +25,8 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setLoading(true);
     if (user) {
       const local = localFavorites.get();
-      dbFavorites.migrate(user.id, local).then(() => {
-        dbFavorites.getAll(user.id).then((items) => {
+      dbFavorites.migrate(local).then(() => {
+        dbFavorites.getAll().then((items) => {
           setFavorites(items);
           setLoading(false);
         });
@@ -47,10 +47,10 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const active = favorites.some((f) => f.type === type && f.id === id);
       if (user) {
         if (active) {
-          await dbFavorites.remove(user.id, type, id);
+          await dbFavorites.remove(type, id);
           setFavorites((prev) => prev.filter((f) => !(f.type === type && f.id === id)));
         } else {
-          await dbFavorites.add(user.id, { type, id });
+          await dbFavorites.add({ type, id });
           setFavorites((prev) => [...prev, { type, id }]);
         }
       } else {

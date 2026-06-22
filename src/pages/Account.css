@@ -58,60 +58,79 @@
   padding: 8px 0 0;
 }
 
-.account-code-sent {
+.account-auth-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 32px 24px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.account-auth-card--center {
+  text-align: center;
+}
+
+.account-icon-circle {
+  width: 72px;
+  height: 72px;
   display: flex;
-  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 12px 0;
-  font-size: 14px;
+  font-size: 30px;
+  color: #fff;
 }
 
-.account-code-sent ion-icon {
-  font-size: 18px;
-  flex-shrink: 0;
+.account-icon-circle--call {
+  border-radius: 50%;
+  background: var(--ion-color-primary);
+  box-shadow: 0 6px 20px rgba(var(--ion-color-primary-rgb), 0.4);
+  margin: 0 auto 12px;
 }
 
-.account-call-instruction {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-  background: #e8f4fd;
-  border-radius: 12px;
-  margin: 8px 0;
+.account-call-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 16px 0 6px;
+  color: #111;
 }
 
-.account-call-instruction ion-icon {
-  font-size: 24px;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.account-call-instruction p {
+.account-call-subtitle {
   margin: 0 0 4px;
   font-size: 14px;
-  color: #333;
 }
 
-.account-zvonok-number {
-  font-size: 22px !important;
+.account-call-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--ion-color-primary);
+  color: #fff;
+  border-radius: 14px;
+  padding: 14px 24px;
+  text-decoration: none;
+  margin: 16px 0;
+  font-size: 18px;
   font-weight: 700;
-  color: #1a73e8 !important;
   letter-spacing: 1px;
+  box-shadow: 0 4px 16px rgba(var(--ion-color-primary-rgb), 0.38);
 }
 
-.account-waiting {
+.account-call-btn ion-icon {
+  font-size: 22px;
+}
+
+.account-waiting-row {
   display: flex;
-  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 12px 0;
-  color: #666;
+  gap: 8px;
+  margin: 12px 0 4px;
   font-size: 14px;
+}
+
+.account-error-text {
+  margin: 8px 0 2px;
+  font-size: 13px;
+  color: var(--ion-color-danger);
 }
 
 .account-actions {
@@ -217,21 +236,11 @@
   font-size: 26px;
 }
 
-.account-edit-form {
-  margin-top: 4px;
-}
-
-.account-edit-form ion-item {
-  --padding-start: 0;
-  --inner-padding-end: 0;
-}
-
-.account-edit-form ion-item ion-icon {
-  margin-right: 12px;
-}
-
-.account-actions--profile {
-  padding-top: 12px;
+.account-bio {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: #555;
+  line-height: 1.5;
 }
 
 .account-menu {

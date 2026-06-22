@@ -14,7 +14,7 @@ import {
 import { useLocation } from 'react-router-dom';
 import { locationOutline, bedOutline, peopleOutline } from 'ionicons/icons';
 import BookmarkButton from './BookmarkButton';
-import CardEditButton from './CardEditButton';
+import CardMenuButton from './CardMenuButton';
 import './HouseCard.css';
 
 export interface HouseCardData {
@@ -26,6 +26,7 @@ export interface HouseCardData {
   rating?: number;
   rooms?: number;
   guests?: number;
+  active?: boolean;
 }
 
 interface HouseCardProps {
@@ -33,15 +34,25 @@ interface HouseCardProps {
   href?: string;
   isOwn?: boolean;
   showOwnBadge?: boolean;
+  onToggleActive?: () => void;
+  onDelete?: () => void;
 }
 
-const HouseCard: React.FC<HouseCardProps> = ({ house, href, isOwn, showOwnBadge }) => {
+const HouseCard: React.FC<HouseCardProps> = ({ house, href, isOwn, showOwnBadge, onToggleActive, onDelete }) => {
   const location = useLocation();
   const placeholder = `https://placehold.co/400x300/0E7490/FFFFFF?text=${encodeURIComponent(house.name)}`;
+  const inactive = house.active === false;
 
   return (
-    <IonCard className={`house-card${showOwnBadge ? ' house-card--own' : ''}`} button={!!href} routerLink={href}>
-      <IonImg src={house.photo ?? placeholder} alt={house.name} className="house-card-img" />
+    <IonCard
+      className={`house-card${showOwnBadge ? ' house-card--own' : ''}${inactive ? ' house-card--inactive' : ''}`}
+      button={!!href || !!isOwn}
+      routerLink={isOwn ? `/houses/${house.id}` : href}
+    >
+      <div className="card-img-wrap">
+        <IonImg src={house.photo ?? placeholder} alt={house.name} className="house-card-img" />
+        {inactive && <span className="card-hidden-badge">Скрыто</span>}
+      </div>
       <IonCardHeader>
         <IonCardTitle className="house-card-title">{house.name}</IonCardTitle>
         {house.location && (
@@ -71,10 +82,17 @@ const HouseCard: React.FC<HouseCardProps> = ({ house, href, isOwn, showOwnBadge 
           </IonText>
           <IonNote className="house-card-per">/ ночь</IonNote>
           <div className="house-card-actions">
-            {isOwn && (
-              <CardEditButton href={`/edit-house/${house.id}?from=${encodeURIComponent(location.pathname)}`} />
-            )}
-            <BookmarkButton type="house" id={Number(house.id)} />
+            {isOwn
+              ? (
+                <CardMenuButton
+                  editHref={`/edit-house/${house.id}?from=${encodeURIComponent(location.pathname)}`}
+                  active={house.active}
+                  onToggleActive={onToggleActive}
+                  onDelete={onDelete}
+                />
+              )
+              : <BookmarkButton type="house" id={Number(house.id)} />
+            }
           </div>
         </div>
       </IonCardContent>

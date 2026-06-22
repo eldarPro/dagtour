@@ -1,0 +1,173 @@
+.lf-root {
+  width: 100%;
+}
+
+/* ─── Chip (выбрано) ─── */
+.lf-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.lf-chip-icon {
+  font-size: 15px;
+  color: #1d4ed8;
+  flex-shrink: 0;
+}
+
+.lf-chip-text {
+  flex: 1;
+  font-size: 14px;
+  color: #1d4ed8;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.lf-chip-x {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: #93c5fd;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ─── Input + dropdown ─── */
+.lf-input-wrap {
+  position: relative;
+}
+
+.lf-search-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  background: #ffffff;
+  border: 1.5px solid #e5e7eb;
+  min-height: 44px;
+}
+
+.lf-search-row--open {
+  border-bottom-color: transparent;
+}
+
+.lf-search-icon {
+  font-size: 15px;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.lf-search-input {
+  flex: 1;
+  padding: 9px 0;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+  color: #111827;
+}
+
+.lf-clear-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.lf-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.lf-list {
+  max-height: 220px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lf-row {
+  display: block;
+  width: 100%;
+  padding: 11px 14px;
+  background: #fff;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+  color: #111827;
+}
+
+.lf-row:hover {
+  background: #f9fafb;
+}
+
+.lf-sub {
+  display: block;
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 1px;
+}
+
+.lf-district-badge {
+  color: #6366f1;
+  font-weight: 500;
+}
+
+/* ─── Быстрые города ─── */
+.lf-city-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.lf-city-chip {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.lf-city-chip:hover,
+.lf-city-chip--active {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.lf-spinner-row {
+  display: flex;
+  justify-content: center;
+  padding: 14px 0;
+}
+
+.lf-empty {
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #9ca3af;
+}

@@ -1,0 +1,23 @@
+.card-menu-btn {
+  --color: #0E7490;
+}
+
+.card-menu-btn ion-icon {
+  font-size: 26px;
+}
+
+.action-btn-edit {
+  color: #0E7490;
+}
+
+.action-btn-hide {
+  color: #f97316;
+}
+
+.action-btn-show {
+  color: #22c55e;
+}
+
+.action-btn-delete {
+  color: #ef4444;
+}

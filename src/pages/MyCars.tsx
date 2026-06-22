@@ -10,13 +10,15 @@ import {
   IonButton,
   IonIcon,
   IonList,
+  IonRefresher,
+  IonRefresherContent,
   useIonViewWillEnter,
 } from '@ionic/react';
 import { addOutline, carOutline, chevronBackOutline } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import CarCard, { CarCardData } from '../components/CarCard';
 import { CarCardSkeleton } from '../components/CardSkeletons';
-import { getMyCars, Car } from '../lib/api';
+import { getMyCars, updateCar, deleteCar, Car } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import './MyCars.css';
 
@@ -33,9 +35,11 @@ const toCardData = (car: Car): CarCardData => ({
   year: car.year,
   pricePerDay: car.pricePerDay,
   photo: car.photo,
+  location: car.location,
   transmission: car.transmission
     ? (TRANSMISSION_LABEL[car.transmission] ?? car.transmission)
     : undefined,
+  active: car.active,
 });
 
 const MyCars: React.FC = () => {
@@ -44,14 +48,49 @@ const MyCars: React.FC = () => {
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useIonViewWillEnter(() => {
+  const loadData = () => {
     if (!user) return;
     setLoading(true);
-    getMyCars(user.id)
+    getMyCars()
       .then(setCars)
       .catch(console.error)
       .finally(() => setLoading(false));
-  });
+  };
+
+  useIonViewWillEnter(loadData);
+
+  const handleToggleActive = async (id: number, current: boolean) => {
+    setCars(prev => prev.map(c => c.id === id ? { ...c, active: !current } : c));
+    try {
+      await updateCar(id, { active: !current });
+    } catch (err) {
+      console.error(err);
+      loadData();
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    setCars(prev => prev.filter(c => c.id !== id));
+    try {
+      await deleteCar(id);
+    } catch (err) {
+      console.error(err);
+      loadData();
+    }
+  };
+
+  const handleRefresh = async (e: CustomEvent) => {
+    if (!user) { (e.target as HTMLIonRefresherElement).complete(); return; }
+    setLoading(true);
+    try {
+      setCars(await getMyCars());
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+      (e.target as HTMLIonRefresherElement).complete();
+    }
+  };
 
   return (
     <IonPage>
@@ -69,6 +108,9 @@ const MyCars: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen className="my-cars-content">
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+          <IonRefresherContent />
+        </IonRefresher>
         {loading ? (
           <IonList lines="none" className="my-cars-list">
             {Array.from({ length: 4 }).map((_, i) => <CarCardSkeleton key={i} />)}
@@ -92,7 +134,13 @@ const MyCars: React.FC = () => {
         ) : (
           <IonList lines="none" className="my-cars-list">
             {cars.map((car) => (
-              <CarCard key={car.id} car={toCardData(car)} isOwn />
+              <CarCard
+                key={car.id}
+                car={toCardData(car)}
+                isOwn
+                onToggleActive={() => handleToggleActive(car.id, car.active ?? true)}
+                onDelete={() => handleDelete(car.id)}
+              />
             ))}
           </IonList>
         )}

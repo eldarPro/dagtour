@@ -388,3 +388,17 @@ export const districts: District[] = [
     ],
   },
 ];
+
+// settlement name (lower) → district name
+const _settlementToDistrict = new Map<string, string>();
+for (const d of districts) {
+  for (const s of d.settlements) {
+    _settlementToDistrict.set(s.name.toLowerCase(), d.name);
+  }
+}
+
+/** Returns the district name for a given city/settlement name, or undefined if not found. */
+export function getSettlementDistrict(name?: string): string | undefined {
+  if (!name) return undefined;
+  return _settlementToDistrict.get(name.toLowerCase());
+}

@@ -44,6 +44,7 @@ const RouteTagInput: React.FC<Props> = ({ value, onChange, required }) => {
       <div className="route-tag-label">
         Маршрут {required && <span className="add-tour-required">*</span>}
       </div>
+      <div className="route-tag-hint">Добавьте места в правильной последовательности не учитывая город выезда</div>
       <div className="route-tag-chips">
         {value.map((point, i) => (
           <IonChip key={i} className="route-chip">
@@ -60,7 +61,7 @@ const RouteTagInput: React.FC<Props> = ({ value, onChange, required }) => {
           ref={inputRef}
           className="route-tag-native-input"
           value={inputVal}
-          placeholder="Название точки..."
+          placeholder="Название места..."
           onChange={(e) => setInputVal(e.target.value)}
           onKeyDown={handleKeyDown}
         />

@@ -1,74 +1,107 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { supabase } from './supabase';
-import type { User, Session } from '@supabase/supabase-js';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { apiFetch, buildQuery, tokenStorage, ApiError } from './apiClient';
+
+export interface User {
+  id: string;
+  phone: string | null;
+  full_name: string | null;
+  bio?: string | null;
+  avatar_url?: string | null;
+}
+
+interface RequestCallResponse {
+  request_id: string;
+  phone_to_call: string;
+}
+
+interface CallStatusResponse {
+  status: 'pending' | 'expired' | 'verified';
+  token?: string;
+  user?: User;
+  is_new_user?: boolean;
+}
 
 interface AuthContextType {
   user: User | null;
-  session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: string | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
-  updateProfile: (updates: { full_name?: string; phone?: string }) => Promise<{ error: string | null }>;
-  sendPhoneCode: (phone: string) => Promise<{ error: string | null }>;
+  refreshUser: () => Promise<void>;
+  updateProfile: (updates: { full_name?: string; phone?: string | null; bio?: string | null; avatar_url?: string | null }) => Promise<{ error: string | null }>;
+  updateAvatar: (file: File) => Promise<{ error: string | null }>;
+  sendPhoneCode: (phone: string) => Promise<{ error: string | null; phoneToCall?: string }>;
   verifyPhoneCode: (phone: string, code: string) => Promise<{ error: string | null; isNewUser?: boolean }>;
+  requestPhoneChange: (phone: string) => Promise<{ error: string | null; requestId?: string; phoneToCall?: string }>;
+  verifyPhoneChange: (requestId: string) => Promise<{ error: string | null; status?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const normalizePhone = (phone: string): string => phone.replace(/[^\d]/g, '');
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const requestIdRef = useRef<string | null>(null);
 
+  // Восстановление сессии: если токен есть — подтягиваем профиль
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    if (!tokenStorage.get()) {
       setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const signUp = useCallback(async (email: string, password: string, fullName?: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: fullName } },
-    });
-    return { error: error ? getErrorMessage(error.message) : null };
-  }, []);
-
-  const signIn = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: error ? getErrorMessage(error.message) : null };
+      return;
+    }
+    apiFetch<User>('/profile')
+      .then(setUser)
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 401) tokenStorage.clear();
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    tokenStorage.clear();
     setUser(null);
-    setSession(null);
   }, []);
 
-  const updateProfile = useCallback(async (updates: { full_name?: string; phone?: string }) => {
-    if (!user) return { error: 'Не авторизован' };
-    const { error } = await supabase
-      .from('profiles')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', user.id);
-    return { error: error ? 'Ошибка при обновлении профиля' : null };
-  }, [user]);
+  const refreshUser = useCallback(async () => {
+    if (!tokenStorage.get()) return;
+    try {
+      const updated = await apiFetch<User>('/profile');
+      setUser(updated);
+    } catch {
+      // ignore network errors silently
+    }
+  }, []);
 
-  const normalizePhone = (phone: string): string => phone.replace(/[^\d]/g, '');
+  const updateProfile = useCallback(async (updates: { full_name?: string; phone?: string | null; bio?: string | null; avatar_url?: string | null }) => {
+    try {
+      const updated = await apiFetch<User>('/profile', {
+        method: 'PUT',
+        body: JSON.stringify(updates),
+      });
+      setUser(updated);
+      return { error: null };
+    } catch {
+      return { error: 'Ошибка при обновлении профиля' };
+    }
+  }, []);
 
-  // Отправка кода через Flash Call (VoicePassword)
+  const updateAvatar = useCallback(async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const { url } = await apiFetch<{ url: string }>('/photos/upload', { method: 'POST', body: formData });
+      const updated = await apiFetch<User>('/profile', {
+        method: 'PUT',
+        body: JSON.stringify({ avatar_url: url }),
+      });
+      setUser(updated);
+      return { error: null };
+    } catch {
+      return { error: 'Ошибка при загрузке фото' };
+    }
+  }, []);
+
+  // Запрос звонка через GreenSMS: бэкенд возвращает номер, на который надо позвонить
   const sendPhoneCode = useCallback(async (phone: string) => {
     const normalizedPhone = normalizePhone(phone);
 
@@ -76,92 +109,85 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: 'Некорректный номер телефона' };
     }
 
-    const apiKey = import.meta.env.VITE_ZVONOK_API_KEY;
-    const campaignId = import.meta.env.VITE_ZVONOK_CAMPAIGN_ID;
-
-    if (!apiKey) {
-      console.log(`🔐 Dev mode — simulating zvonok confirm for ${normalizedPhone}`);
-      return { error: null };
-    }
-
     try {
-      const base = import.meta.env.DEV ? '/zvonok-proxy' : 'https://zvonok.com';
-      const url = `${base}/manager/cabapi_external/api/v1/phones/confirm/?campaign_id=${campaignId}&phone=%2B${normalizedPhone}&public_key=${apiKey}`;
-      const response = await fetch(url);
-      const data = await response.json();
-      console.log('Zvonok confirm:', data);
-      if (data.status !== 'ok') {
-        return { error: 'Ошибка сервиса: ' + JSON.stringify(data.data) };
-      }
-      return { error: null };
+      const data = await apiFetch<RequestCallResponse>('/auth/request_call', {
+        method: 'POST',
+        body: JSON.stringify({ phone: normalizedPhone }),
+      });
+      requestIdRef.current = data.request_id;
+      return { error: null, phoneToCall: data.phone_to_call };
     } catch (err) {
+      if (err instanceof ApiError) return { error: err.message };
       return { error: 'Ошибка сети: ' + (err instanceof Error ? err.message : String(err)) };
     }
   }, []);
 
-  // Ожидание подтверждения звонка на +7 800 555-86-07 и авторизация
-  const verifyPhoneCode = useCallback(async (phone: string, _code: string) => {
-    const normalizedPhone = normalizePhone(phone);
-    const apiKey = import.meta.env.VITE_ZVONOK_API_KEY;
-    const campaignId = import.meta.env.VITE_ZVONOK_CAMPAIGN_ID;
+  // Ожидание подтверждения звонка и авторизация (поллинг до ~3 минут)
+  const verifyPhoneCode = useCallback(async (_phone: string, _code: string) => {
+    const requestId = requestIdRef.current;
+    if (!requestId) return { error: 'Сначала запросите звонок' };
 
-    if (apiKey) {
-      const base = import.meta.env.DEV ? '/zvonok-proxy' : 'https://zvonok.com';
-      let confirmed = false;
-
-      for (let i = 0; i < 60 && !confirmed; i++) {
-        await new Promise(r => setTimeout(r, 3000));
-        try {
-          const url = `${base}/manager/cabapi_external/api/v1/phones/calls_by_phone/?campaign_id=${campaignId}&phone=%2B${normalizedPhone}&public_key=${apiKey}`;
-          const resp = await fetch(url);
-          const data = await resp.json();
-          console.log('Zvonok status:', data);
-          if (Array.isArray(data) && data.length > 0) {
-            const status = (data[0].call_status || data[0].status || '').toLowerCase();
-            if (['success', 'done', 'answrd', 'completed', 'pincode_ok'].includes(status)) {
-              confirmed = true;
-            } else if (status && !['in_process', 'queued', 'enroute', 'acceptd', ''].includes(status)) {
-              return { error: 'Звонок не выполнен. Попробуйте ещё раз.' };
-            }
-          }
-        } catch {
-          // continue polling
+    for (let i = 0; i < 60; i++) {
+      await new Promise((r) => setTimeout(r, 3000));
+      try {
+        const data = await apiFetch<CallStatusResponse>(`/auth/call_status${buildQuery({ request_id: requestId })}`);
+        if (data.status === 'verified' && data.token && data.user) {
+          requestIdRef.current = null;
+          tokenStorage.set(data.token);
+          setUser(data.user);
+          return { error: null, isNewUser: data.is_new_user ?? false };
         }
-      }
-
-      if (!confirmed) {
-        return { error: 'Время ожидания истекло. Позвоните на +7 800 555-86-07 и попробуйте снова.' };
+        if (data.status === 'expired') {
+          requestIdRef.current = null;
+          return { error: 'Время подтверждения истекло. Запросите звонок ещё раз.' };
+        }
+        // pending — продолжаем поллинг
+      } catch {
+        // сетевая ошибка — продолжаем поллинг
       }
     }
 
-    // Создаём/находим пользователя и сессию через Edge Function (service role key на сервере)
+    return { error: 'Время ожидания истекло. Позвоните на номер для подтверждения и попробуйте снова.' };
+  }, []);
+
+  const requestPhoneChange = useCallback(async (phone: string) => {
+    const normalizedPhone = normalizePhone(phone);
+    if (normalizedPhone.length < 7 || normalizedPhone.length > 15) {
+      return { error: 'Некорректный номер телефона' };
+    }
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('phone-auth', {
-        body: { phone: normalizedPhone },
+      const data = await apiFetch<{ request_id: string; phone_to_call: string }>('/auth/request_phone_change', {
+        method: 'POST',
+        body: JSON.stringify({ phone: normalizedPhone }),
       });
-
-      if (fnError || !data?.hashed_token) {
-        return { error: data?.error || fnError?.message || 'Ошибка авторизации' };
-      }
-
-      const { error: otpError } = await supabase.auth.verifyOtp({
-        token_hash: data.hashed_token,
-        type: 'email',
-      });
-
-      if (otpError) {
-        return { error: 'Ошибка входа: ' + otpError.message };
-      }
-
-      return { error: null, isNewUser: data.isNewUser ?? false };
+      return { error: null, requestId: data.request_id, phoneToCall: data.phone_to_call };
     } catch (err) {
-      console.error('phone-auth function error:', err);
-      return { error: 'Ошибка при авторизации' };
+      if (err instanceof ApiError) return { error: err.message };
+      return { error: 'Ошибка сети: ' + (err instanceof Error ? err.message : String(err)) };
     }
   }, []);
 
+  const verifyPhoneChange = useCallback(async (requestId: string) => {
+    for (let i = 0; i < 60; i++) {
+      await new Promise((r) => setTimeout(r, 3000));
+      try {
+        const data = await apiFetch<{ status: string; user?: User }>(`/auth/phone_change_status?request_id=${requestId}`);
+        if (data.status === 'verified' && data.user) {
+          setUser(data.user);
+          return { error: null, status: 'verified' };
+        }
+        if (data.status === 'expired') {
+          return { error: 'Время подтверждения истекло. Запросите звонок ещё раз.', status: 'expired' };
+        }
+      } catch {
+        // сетевая ошибка — продолжаем поллинг
+      }
+    }
+    return { error: 'Время ожидания истекло. Позвоните на номер для подтверждения и попробуйте снова.', status: 'expired' };
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut, updateProfile, sendPhoneCode, verifyPhoneCode }}>
+    <AuthContext.Provider value={{ user, loading, signOut, refreshUser, updateProfile, updateAvatar, sendPhoneCode, verifyPhoneCode, requestPhoneChange, verifyPhoneChange }}>
       {children}
     </AuthContext.Provider>
   );
@@ -174,14 +200,3 @@ export const useAuth = () => {
   }
   return context;
 };
-
-function getErrorMessage(message: string): string {
-  const errorMap: Record<string, string> = {
-    'Invalid login credentials': 'Неверный email или пароль',
-    'Email not confirmed': 'Подтвердите email перед входом',
-    'User already registered': 'Пользователь с таким email уже существует',
-    'Password should be at least 6 characters': 'Пароль должен содержать минимум 6 символов',
-    'Invalid email': 'Некорректный email',
-  };
-  return errorMap[message] || message;
-}

@@ -1,96 +1,58 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { useHistory } from 'react-router-dom';
+import { transmissionLabel } from '../data/carFilters';
+import YandexMap, { MapItem, UserLocation } from './YandexMap';
 import './CarsMap.css';
 
-const YANDEX_API_KEY = '57398362-80f4-4fe3-a697-4fbd3ceb320c';
-const SCRIPT_ID = 'ymaps3-script';
-
-export interface MapCarItem {
-  id: string | number;
-  brand: string;
-  model: string;
+export interface MapCarItem extends MapItem {
   pricePerDay: number;
-  lat: number;
-  lng: number;
+  location?: string;
+  seats?: number;
+  transmission?: string;
+  year?: number;
 }
 
 interface Props {
   cars: MapCarItem[];
+  userLocation?: UserLocation;
 }
 
-const CarsMap: React.FC<Props> = ({ cars }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<any>(null);
+const CarsMap: React.FC<Props> = ({ cars, userLocation }) => {
   const history = useHistory();
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const initMap = async () => {
-      const ymaps3 = (window as any).ymaps3;
-      await ymaps3.ready;
-      if (cancelled || !containerRef.current || mapRef.current) return;
-
-      const {
-        YMap,
-        YMapDefaultSchemeLayer,
-        YMapDefaultFeaturesLayer,
-        YMapMarker,
-      } = ymaps3;
-
-      const map = new YMap(containerRef.current, {
-        location: {
-          center: [47.5, 42.5],
-          zoom: 7,
-        },
-      });
-
-      map.addChild(new YMapDefaultSchemeLayer({}));
-      map.addChild(new YMapDefaultFeaturesLayer({}));
-
-      cars.forEach((car) => {
-        const el = document.createElement('div');
-        el.className = 'car-map-marker';
-        el.innerHTML = `<span>₽${car.pricePerDay.toLocaleString('ru-RU')}</span>`;
-        el.addEventListener('click', () => history.push(`/cars/${car.id}`));
-
-        const marker = new YMapMarker(
-          { coordinates: [car.lng, car.lat] },
-          el
-        );
-        map.addChild(marker);
-      });
-
-      mapRef.current = map;
-    };
-
-    const loadAndInit = () => {
-      if ((window as any).ymaps3) {
-        initMap();
-      } else if (!document.getElementById(SCRIPT_ID)) {
-        const script = document.createElement('script');
-        script.id = SCRIPT_ID;
-        script.src = `https://api-maps.yandex.ru/v3/?apikey=${YANDEX_API_KEY}&lang=ru_RU`;
-        script.async = true;
-        script.onload = initMap;
-        document.head.appendChild(script);
-      } else {
-        document.getElementById(SCRIPT_ID)!.addEventListener('load', initMap);
-      }
-    };
-
-    loadAndInit();
-
-    return () => {
-      cancelled = true;
-      if (mapRef.current) {
-        mapRef.current.destroy?.();
-        mapRef.current = null;
-      }
-    };
-  }, [cars, history]);
-
-  return <div ref={containerRef} className="cars-map-container" />;
+  return (
+    <YandexMap
+      items={cars}
+      userLocation={userLocation}
+      getItemPrice={(c) => c.pricePerDay}
+      markerClassName="car-map-marker"
+      clusterClassName="car-map-cluster"
+      containerClassName="cars-map-container"
+      renderPanel={(car, onClose) => (
+        <div className="map-top-panel">
+          <button className="map-top-panel__close" onClick={onClose}>×</button>
+          {car.photo && <img className="map-top-panel__photo" src={car.photo} alt={car.name} />}
+          <div className="map-top-panel__body">
+            <div className="map-top-panel__title">{car.name}</div>
+            {car.location && <div className="map-top-panel__location">📍 {car.location}</div>}
+            <div className="map-top-panel__chips">
+              {car.seats != null && <span className="map-top-panel__chip">👤 {car.seats} мест</span>}
+              {car.transmission && <span className="map-top-panel__chip">⚙ {transmissionLabel(car.transmission)}</span>}
+              {car.year && !car.seats && <span className="map-top-panel__chip">{car.year} г.</span>}
+            </div>
+            <div className="map-top-panel__footer">
+              <div>
+                <span className="map-top-panel__price">{car.pricePerDay.toLocaleString('ru-RU')} ₽</span>
+                <span className="map-top-panel__per"> / день</span>
+              </div>
+              <button className="map-top-panel__open" onClick={() => history.push(`/cars/${car.id}`)}>
+                Открыть
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    />
+  );
 };
 
 export default CarsMap;

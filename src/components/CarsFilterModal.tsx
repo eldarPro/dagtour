@@ -1,25 +1,10 @@
 import React from 'react';
-import {
-  IonModal,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonContent,
-  IonButton,
-  IonButtons,
-  IonItem,
-  IonLabel,
-  IonSelect,
-  IonSelectOption,
-  IonIcon,
-  IonRange,
-} from '@ionic/react';
-import { closeOutline } from 'ionicons/icons';
-import { CarFilters, DEFAULT_FILTERS, PRICE_MIN } from '../data/carFilters';
-import './HousesFilterModal.css';
+import { CarFilters, CarType, DEFAULT_FILTERS, PRICE_MAX } from '../data/carFilters';
+import LocationFilterPicker from './LocationFilterPicker';
+import FilterModal from './FilterModal';
 
-const TYPES: Array<CarFilters['type']> = ['Все', 'эконом', 'комфорт', 'внедорожник'];
-const TRANSMISSIONS: Array<CarFilters['transmission']> = ['Все', 'механика', 'автомат'];
+const TYPES: CarType[] = ['Все', 'Седан', 'Хэтчбек', 'Кроссовер', 'Внедорожник', 'Минивэн'];
+const TRANSMISSIONS: Array<CarFilters['transmission']> = ['Все', 'механика', 'автомат', 'робот'];
 
 interface Props {
   isOpen: boolean;
@@ -29,43 +14,18 @@ interface Props {
   onApply: (filters: CarFilters) => void;
 }
 
-const CarsFilterModal: React.FC<Props> = ({ isOpen, filters, priceMax, onClose, onApply }) => {
-  const [local, setLocal] = React.useState<CarFilters>(filters);
+const CarsFilterModal: React.FC<Props> = ({ isOpen, filters, priceMax, onClose, onApply }) => (
+  <FilterModal isOpen={isOpen} filters={filters} defaultFilters={DEFAULT_FILTERS} onClose={onClose} onApply={onApply}>
+    {(local, setLocal) => (
+      <>
+        <section className="filter-section">
+          <h3 className="filter-section-title">Населённый пункт</h3>
+          <LocationFilterPicker
+            value={local.locationFilter}
+            onChange={(loc) => setLocal((f) => ({ ...f, locationFilter: loc }))}
+          />
+        </section>
 
-  React.useEffect(() => {
-    if (isOpen) setLocal(filters);
-  }, [isOpen, filters]);
-
-  const handleApply = () => {
-    onApply(local);
-    onClose();
-  };
-
-  const handleReset = () => {
-    setLocal(DEFAULT_FILTERS);
-  };
-
-  return (
-    <IonModal
-      isOpen={isOpen}
-      onDidDismiss={onClose}
-      breakpoints={[0, 0.85]}
-      initialBreakpoint={0.85}
-      handleBehavior="cycle"
-    >
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Фильтры</IonTitle>
-          <IonButtons slot="end">
-            <IonButton fill="clear" onClick={onClose}>
-              <IonIcon icon={closeOutline} />
-            </IonButton>
-          </IonButtons>
-        </IonToolbar>
-      </IonHeader>
-
-      <IonContent className="filter-modal-content">
-        {/* Тип автомобиля */}
         <section className="filter-section">
           <h3 className="filter-section-title">Тип автомобиля</h3>
           <div className="filter-chips">
@@ -75,13 +35,12 @@ const CarsFilterModal: React.FC<Props> = ({ isOpen, filters, priceMax, onClose, 
                 className={`filter-chip ${local.type === type ? 'active' : ''}`}
                 onClick={() => setLocal((f) => ({ ...f, type }))}
               >
-                {type === 'Все' ? 'Все' : type.charAt(0).toUpperCase() + type.slice(1)}
+                {type}
               </button>
             ))}
           </div>
         </section>
 
-        {/* Трансмиссия */}
         <section className="filter-section">
           <h3 className="filter-section-title">Трансмиссия</h3>
           <div className="filter-chips">
@@ -97,59 +56,53 @@ const CarsFilterModal: React.FC<Props> = ({ isOpen, filters, priceMax, onClose, 
           </div>
         </section>
 
-        {/* Количество мест */}
         <section className="filter-section">
-          <IonItem lines="none" className="filter-select-item">
-            <IonLabel>Количество мест</IonLabel>
-            <IonSelect
-              value={local.seatsMin}
-              placeholder="Любое"
-              onIonChange={(e) => setLocal((f) => ({ ...f, seatsMin: e.detail.value }))}
-              interface="action-sheet"
-              cancelText="Отмена"
-            >
-              {[0, 4, 5, 7].map((v) => (
-                <IonSelectOption key={v} value={v}>
-                  {v === 0 ? 'Любое' : `${v}+ мест`}
-                </IonSelectOption>
-              ))}
-            </IonSelect>
-          </IonItem>
-        </section>
-
-        {/* Цена за день */}
-        <section className="filter-section">
-          <h3 className="filter-section-title">Цена за день</h3>
-          <div className="filter-price-labels">
-            <span>{local.priceMin.toLocaleString('ru-RU')} ₽</span>
-            <span>{Math.min(local.priceMax, priceMax).toLocaleString('ru-RU')} ₽</span>
+          <h3 className="filter-section-title">Количество мест</h3>
+          <div className="filter-chips">
+            {[{ label: 'Любое', value: 0 }, { label: '2+', value: 2 }, { label: '3+', value: 3 }, { label: '4+', value: 4 }, { label: '5+', value: 5 }].map(({ label, value }) => (
+              <button
+                key={value}
+                className={`filter-chip ${local.seatsMin === value ? 'active' : ''}`}
+                onClick={() => setLocal((f) => ({ ...f, seatsMin: value }))}
+              >
+                {label}
+              </button>
+            ))}
           </div>
-          <IonRange
-            dualKnobs
-            min={PRICE_MIN}
-            max={priceMax}
-            step={500}
-            value={{ lower: local.priceMin, upper: Math.min(local.priceMax, priceMax) }}
-            onIonChange={(e) => {
-              const { lower, upper } = e.detail.value as { lower: number; upper: number };
-              setLocal((f) => ({ ...f, priceMin: lower, priceMax: upper }));
-            }}
-            className="filter-price-range"
-          />
         </section>
 
-        <div className="filter-footer">
-          <IonButton fill="outline" className="filter-btn-reset" onClick={handleReset}>
-            Сбросить
-          </IonButton>
-          <IonButton expand="block" className="filter-btn-apply" onClick={handleApply}>
-            Применить
-          </IonButton>
-        </div>
-      </IonContent>
-    </IonModal>
-  );
-};
+        <section className="filter-section">
+          <h3 className="filter-section-title">Цена за день, ₽</h3>
+          <div className="filter-number-row">
+            <div className="filter-number-field">
+              <label className="filter-number-label">От</label>
+              <input type="number" min={0} className="filter-number-input" placeholder="0"
+                value={local.priceMin || ''}
+                onChange={(e) => setLocal((f) => ({ ...f, priceMin: e.target.value ? Number(e.target.value) : 0 }))} />
+            </div>
+            <div className="filter-number-field">
+              <label className="filter-number-label">До</label>
+              <input type="number" min={0} className="filter-number-input" placeholder="Любая"
+                value={local.priceMax >= PRICE_MAX ? '' : local.priceMax || ''}
+                onChange={(e) => setLocal((f) => ({ ...f, priceMax: e.target.value ? Number(e.target.value) : PRICE_MAX }))} />
+            </div>
+          </div>
+        </section>
+
+        <section className="filter-section">
+          <h3 className="filter-section-title">Сортировка</h3>
+          <div className="filter-chips">
+            {([{ label: 'Новые', value: undefined }, { label: 'По цене ↑', value: 'price_asc' }, { label: 'По цене ↓', value: 'price_desc' }] as const).map(({ label, value }) => (
+              <button key={label} className={`filter-chip ${local.sort === value ? 'active' : ''}`}
+                onClick={() => setLocal((f) => ({ ...f, sort: value }))}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </section>
+      </>
+    )}
+  </FilterModal>
+);
 
 export default CarsFilterModal;
-
