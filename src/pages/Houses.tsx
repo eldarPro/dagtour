@@ -26,7 +26,7 @@ import HouseCard, { HouseCardData } from '../components/HouseCard';
 import { HouseCardSkeleton } from '../components/CardSkeletons';
 import HousesMap, { MapHouseItem } from '../components/HousesMap';
 import HousesFilterModal from '../components/HousesFilterModal';
-import { getHousesFiltered, getMyHouses, getMaxPrice, getHousePins, updateHouse, deleteHouse, House } from '../lib/api';
+import { getHousesFiltered, getHousePins, updateHouse, deleteHouse, House } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useAuthGuard } from '../hooks/useAuthGuard';
 import { HouseFilters, DEFAULT_FILTERS, isFiltersActive, applyFilters } from '../data/houseFilters';
@@ -59,8 +59,35 @@ const Houses: React.FC = () => {
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [priceMax, setPriceMax] = useState(0);
   const [mapPins, setMapPins] = useState<MapHouseItem[]>([]);
+  const [mapPinsLoaded, setMapPinsLoaded] = useState(false);
+
+  const loadHouses = useCallback(async (currentFilters: HouseFilters, currentOffset: number, userId?: string) => {
+    const lf = currentFilters.locationFilter;
+    const { data, hasMore: more } = await getHousesFiltered(
+      {
+        city: lf.city,
+        district: !lf.city ? lf.district : undefined,
+        citiesInDistrict: !lf.city ? lf.citiesInDistrict : undefined,
+        houseType: currentFilters.houseType,
+        priceMin: currentFilters.priceMin,
+        priceMax: currentFilters.priceMax,
+        minRooms: currentFilters.minRooms,
+        minGuests: currentFilters.minGuests,
+        sort: currentFilters.sort,
+      },
+      currentOffset,
+      PAGE_SIZE,
+    );
+    if (currentOffset === 0) {
+      setMyHouses(data.filter((h) => h.userId === userId));
+      setOtherHouses(data.filter((h) => h.userId !== userId));
+    } else {
+      setOtherHouses((prev) => [...prev, ...data.filter((h) => h.userId !== userId)]);
+    }
+    setHasMore(more);
+    setOffset(currentOffset + data.length);
+  }, []);
 
   const loadMapPins = useCallback(async (currentFilters: HouseFilters) => {
     const lf = currentFilters.locationFilter;
@@ -76,49 +103,13 @@ const Houses: React.FC = () => {
       sort: currentFilters.sort,
     });
     setMapPins(pins.map((p) => ({ id: p.id, pricePerNight: p.pricePerNight, lat: p.lat, lng: p.lng, name: p.name, photo: p.photo, location: p.location, rooms: p.rooms, guests: p.guests })));
-  }, []);
-
-  const loadOtherHouses = useCallback(async (currentFilters: HouseFilters, currentOffset: number, userId?: string) => {
-    const lf = currentFilters.locationFilter;
-    const { data, hasMore: more } = await getHousesFiltered(
-      {
-        city: lf.city,
-        district: !lf.city ? lf.district : undefined,
-        citiesInDistrict: !lf.city ? lf.citiesInDistrict : undefined,
-        houseType: currentFilters.houseType,
-        priceMin: currentFilters.priceMin,
-        priceMax: currentFilters.priceMax,
-        minRooms: currentFilters.minRooms,
-        minGuests: currentFilters.minGuests,
-        excludeUserId: userId,
-        sort: currentFilters.sort,
-      },
-      currentOffset,
-      PAGE_SIZE,
-    );
-    if (currentOffset === 0) {
-      setOtherHouses(data);
-    } else {
-      setOtherHouses((prev) => [...prev, ...data]);
-    }
-    setHasMore(more);
-    setOffset(currentOffset + data.length);
+    setMapPinsLoaded(true);
   }, []);
 
   useIonViewWillEnter(() => {
     setLoading(true);
-    const userId = user?.id;
-    const currentFilters = filters;
-    Promise.all([
-      getMaxPrice('houses_max_price'),
-      userId ? getMyHouses() : Promise.resolve([]),
-      loadOtherHouses(currentFilters, 0, userId),
-      loadMapPins(currentFilters),
-    ])
-      .then(([max, my]) => {
-        setPriceMax(max);
-        setMyHouses(my as House[]);
-      })
+    setMapPinsLoaded(false);
+    loadHouses(filters, 0, user?.id)
       .catch(console.error)
       .finally(() => setLoading(false));
   });
@@ -126,8 +117,12 @@ const Houses: React.FC = () => {
   const handleApplyFilters = (newFilters: HouseFilters) => {
     setFilters(newFilters);
     setOffset(0);
-    loadOtherHouses(newFilters, 0, user?.id).catch(console.error);
-    loadMapPins(newFilters).catch(console.error);
+    loadHouses(newFilters, 0, user?.id).catch(console.error);
+    if (viewMode === 'map') {
+      loadMapPins(newFilters).catch(console.error);
+    } else {
+      setMapPinsLoaded(false);
+    }
   };
 
   const handleReset = () => {
@@ -135,14 +130,9 @@ const Houses: React.FC = () => {
   };
 
   const handleRefresh = async (e: CustomEvent) => {
-    const userId = user?.id;
     setOffset(0);
-    await Promise.all([
-      getMaxPrice('houses_max_price').then(setPriceMax),
-      userId ? getMyHouses().then(setMyHouses) : Promise.resolve(),
-      loadOtherHouses(filters, 0, userId),
-      loadMapPins(filters),
-    ]).catch(console.error);
+    setMapPinsLoaded(false);
+    await loadHouses(filters, 0, user?.id).catch(console.error);
     (e.target as HTMLIonRefresherElement).complete();
   };
 
@@ -172,7 +162,13 @@ const Houses: React.FC = () => {
           <IonSegment
             mode="md"
             value={viewMode}
-            onIonChange={(e) => setViewMode(e.detail.value as ViewMode)}
+            onIonChange={(e) => {
+              const newMode = e.detail.value as ViewMode;
+              setViewMode(newMode);
+              if (newMode === 'map' && !mapPinsLoaded) {
+                loadMapPins(filters).catch(console.error);
+              }
+            }}
           >
             <IonSegmentButton value="list" layout="icon-start">
               <IonIcon icon={listOutline} />
@@ -234,7 +230,7 @@ const Houses: React.FC = () => {
           )}
           <IonInfiniteScroll
             onIonInfinite={async (e) => {
-              await loadOtherHouses(filters, offset, user?.id);
+              await loadHouses(filters, offset, user?.id);
               (e.target as HTMLIonInfiniteScrollElement).complete();
             }}
             disabled={loading || !hasMore}
@@ -261,7 +257,6 @@ const Houses: React.FC = () => {
       <HousesFilterModal
         isOpen={filterOpen}
         filters={filters}
-        priceMax={priceMax}
         onClose={() => setFilterOpen(false)}
         onApply={handleApplyFilters}
       />

@@ -7,12 +7,11 @@ import FilterModal from './FilterModal';
 interface Props {
   isOpen: boolean;
   filters: HouseFilters;
-  priceMax: number;
   onClose: () => void;
   onApply: (filters: HouseFilters) => void;
 }
 
-const HousesFilterModal: React.FC<Props> = ({ isOpen, filters, priceMax, onClose, onApply }) => {
+const HousesFilterModal: React.FC<Props> = ({ isOpen, filters, onClose, onApply }) => {
   const [houseTypes, setHouseTypes] = useState<string[]>(['Все']);
 
   useEffect(() => {

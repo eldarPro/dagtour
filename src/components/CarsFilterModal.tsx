@@ -9,12 +9,11 @@ const TRANSMISSIONS: Array<CarFilters['transmission']> = ['Все', 'механ�
 interface Props {
   isOpen: boolean;
   filters: CarFilters;
-  priceMax: number;
   onClose: () => void;
   onApply: (filters: CarFilters) => void;
 }
 
-const CarsFilterModal: React.FC<Props> = ({ isOpen, filters, priceMax, onClose, onApply }) => (
+const CarsFilterModal: React.FC<Props> = ({ isOpen, filters, onClose, onApply }) => (
   <FilterModal isOpen={isOpen} filters={filters} defaultFilters={DEFAULT_FILTERS} onClose={onClose} onApply={onApply}>
     {(local, setLocal) => (
       <>

@@ -22,7 +22,7 @@ import { optionsOutline, addOutline } from 'ionicons/icons';
 import TourCard from '../components/TourCard';
 import { TourCardSkeleton } from '../components/CardSkeletons';
 import ToursFilterModal from '../components/ToursFilterModal';
-import { getToursFiltered, getMaxPrice, updateTour, deleteTour, Tour } from '../lib/api';
+import { getToursFiltered, updateTour, deleteTour, Tour } from '../lib/api';
 import { TourFilters, DEFAULT_FILTERS, isFiltersActive, durationToParams } from '../data/tourFilters';
 import { useAuthGuard } from '../hooks/useAuthGuard';
 import { useAuth } from '../lib/auth';
@@ -39,7 +39,6 @@ const Tours: React.FC = () => {
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [priceMax, setPriceMax] = useState(0);
 
   const loadTours = useCallback(async (currentFilters: TourFilters, currentOffset: number) => {
     const lf = currentFilters.locationFilter;
@@ -68,13 +67,7 @@ const Tours: React.FC = () => {
 
   useIonViewWillEnter(() => {
     setLoading(true);
-    Promise.all([
-      getMaxPrice('tours_max_price'),
-      loadTours(DEFAULT_FILTERS, 0),
-    ])
-      .then(([max]) => {
-        setPriceMax(max);
-      })
+    loadTours(DEFAULT_FILTERS, 0)
       .catch(console.error)
       .finally(() => setLoading(false));
   });
@@ -91,10 +84,7 @@ const Tours: React.FC = () => {
 
   const handleRefresh = async (e: CustomEvent) => {
     setOffset(0);
-    await Promise.all([
-      getMaxPrice('tours_max_price').then(setPriceMax),
-      loadTours(filters, 0),
-    ]).catch(console.error);
+    await loadTours(filters, 0).catch(console.error);
     (e.target as HTMLIonRefresherElement).complete();
   };
 
@@ -175,7 +165,6 @@ const Tours: React.FC = () => {
       <ToursFilterModal
         isOpen={filterOpen}
         filters={filters}
-        priceMax={priceMax}
         onClose={() => setFilterOpen(false)}
         onApply={handleApplyFilters}
       />

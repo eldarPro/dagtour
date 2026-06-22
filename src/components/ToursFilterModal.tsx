@@ -15,12 +15,11 @@ function durationLabel(d: DurationFilter): string {
 interface Props {
   isOpen: boolean;
   filters: TourFilters;
-  priceMax: number;
   onClose: () => void;
   onApply: (filters: TourFilters) => void;
 }
 
-const ToursFilterModal: React.FC<Props> = ({ isOpen, filters, priceMax, onClose, onApply }) => (
+const ToursFilterModal: React.FC<Props> = ({ isOpen, filters, onClose, onApply }) => (
   <FilterModal isOpen={isOpen} filters={filters} defaultFilters={DEFAULT_FILTERS} onClose={onClose} onApply={onApply}>
     {(local, setLocal) => (
       <>

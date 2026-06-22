@@ -19,7 +19,7 @@ import {
   IonRefresherContent,
 } from '@ionic/react';
 import { homeOutline, homeSharp, carSportOutline, compassOutline, chevronForwardOutline } from 'ionicons/icons';
-import { getHouses, getCars, getTours, House, Car, Tour } from '../lib/api';
+import { getHomeData, House, Car, Tour } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import CarCard from '../components/CarCard';
 import HouseCard from '../components/HouseCard';
@@ -32,19 +32,21 @@ const Home: React.FC = () => {
   const [houses, setHouses] = useState<House[]>([]);
   const [cars, setCars] = useState<Car[]>([]);
   const [tours, setTours] = useState<Tour[]>([]);
+  const [housesTotal, setHousesTotal] = useState<number | null>(null);
+  const [carsTotal, setCarsTotal] = useState<number | null>(null);
+  const [toursTotal, setToursTotal] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
     try {
-      const [housesData, carsData, toursData] = await Promise.all([
-        getHouses(),
-        getCars(),
-        getTours(),
-      ]);
-      setHouses(housesData);
-      setCars(carsData);
-      setTours(toursData);
+      const { houses, cars, tours } = await getHomeData();
+      setHouses(houses.data);
+      setCars(cars.data);
+      setTours(tours.data);
+      setHousesTotal(houses.total);
+      setCarsTotal(cars.total);
+      setToursTotal(tours.total);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -87,7 +89,7 @@ const Home: React.FC = () => {
                 <IonCardContent className="cat-card-content">
                   <IonIcon ios={homeOutline} md={homeSharp} className="cat-card-icon cat-card-icon--green" />
                   <IonLabel><strong>Дома</strong></IonLabel>
-                  <IonNote>{loading ? '—' : houses.length}</IonNote>
+                  <IonNote>{loading ? '—' : housesTotal}</IonNote>
                 </IonCardContent>
               </IonCard>
             </IonCol>
@@ -96,7 +98,7 @@ const Home: React.FC = () => {
                 <IonCardContent className="cat-card-content">
                   <IonIcon icon={carSportOutline} className="cat-card-icon cat-card-icon--teal" />
                   <IonLabel><strong>Авто</strong></IonLabel>
-                  <IonNote>{loading ? '—' : cars.length}</IonNote>
+                  <IonNote>{loading ? '—' : carsTotal}</IonNote>
                 </IonCardContent>
               </IonCard>
             </IonCol>
@@ -105,7 +107,7 @@ const Home: React.FC = () => {
                 <IonCardContent className="cat-card-content">
                   <IonIcon icon={compassOutline} className="cat-card-icon cat-card-icon--indigo" />
                   <IonLabel><strong>Туры</strong></IonLabel>
-                  <IonNote>{loading ? '—' : tours.length}</IonNote>
+                  <IonNote>{loading ? '—' : toursTotal}</IonNote>
                 </IonCardContent>
               </IonCard>
             </IonCol>
@@ -133,7 +135,7 @@ const Home: React.FC = () => {
                 ? Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className="scroll-item"><HouseCardSkeleton /></div>
                   ))
-                : houses.slice(0, 4).map((house) => {
+                : houses.map((house) => {
                     const isOwn = !!user && house.userId === user.id;
                     return (
                       <div key={house.id} className="scroll-item">
@@ -181,7 +183,7 @@ const Home: React.FC = () => {
                 ? Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className="scroll-item"><CarCardSkeleton /></div>
                   ))
-                : cars.slice(0, 4).map((car) => (
+                : cars.map((car) => (
                     <div key={car.id} className="scroll-item">
                       <CarCard
                         car={{
@@ -224,7 +226,7 @@ const Home: React.FC = () => {
                 ? Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className="scroll-item"><TourCardSkeleton /></div>
                   ))
-                : tours.slice(0, 4).map((tour) => (
+                : tours.map((tour) => (
                     <div key={tour.id} className="scroll-item">
                       <TourCard tour={tour} isOwn={!!user && tour.userId === user.id} showOwnBadge={!!user && tour.userId === user.id} />
                     </div>

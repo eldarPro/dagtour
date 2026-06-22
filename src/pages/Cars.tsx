@@ -25,7 +25,7 @@ import { listOutline, mapOutline, optionsOutline, addOutline } from 'ionicons/ic
 import CarCard, { CarCardData } from '../components/CarCard';
 import { CarCardSkeleton } from '../components/CardSkeletons';
 import CarsMap, { MapCarItem } from '../components/CarsMap';
-import { getCarsFiltered, getMyCars, getMaxPrice, getCarPins, updateCar, deleteCar, Car } from '../lib/api';
+import { getCarsFiltered, getCarPins, updateCar, deleteCar, Car } from '../lib/api';
 import CarsFilterModal from '../components/CarsFilterModal';
 import { useAuth } from '../lib/auth';
 import { useAuthGuard } from '../hooks/useAuthGuard';
@@ -69,8 +69,35 @@ const Cars: React.FC = () => {
   const [hasMore, setHasMore] = useState(false);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [priceMax, setPriceMax] = useState(0);
   const [mapPins, setMapPins] = useState<MapCarItem[]>([]);
+  const [mapPinsLoaded, setMapPinsLoaded] = useState(false);
+
+  const loadCars = useCallback(async (currentFilters: CarFilters, currentOffset: number, userId?: string) => {
+    const lf = currentFilters.locationFilter;
+    const { data, hasMore: more } = await getCarsFiltered(
+      {
+        type: currentFilters.type,
+        transmission: currentFilters.transmission,
+        seatsMin: currentFilters.seatsMin,
+        priceMin: currentFilters.priceMin,
+        priceMax: currentFilters.priceMax,
+        city: lf.city,
+        district: !lf.city ? lf.district : undefined,
+        citiesInDistrict: !lf.city ? lf.citiesInDistrict : undefined,
+        sort: currentFilters.sort,
+      },
+      currentOffset,
+      PAGE_SIZE,
+    );
+    if (currentOffset === 0) {
+      setMyCars(data.filter((c) => c.userId === userId));
+      setOtherCars(data.filter((c) => c.userId !== userId));
+    } else {
+      setOtherCars((prev) => [...prev, ...data.filter((c) => c.userId !== userId)]);
+    }
+    setHasMore(more);
+    setOffset(currentOffset + data.length);
+  }, []);
 
   const loadMapPins = useCallback(async (currentFilters: CarFilters) => {
     const lf = currentFilters.locationFilter;
@@ -86,49 +113,13 @@ const Cars: React.FC = () => {
       sort: currentFilters.sort,
     });
     setMapPins(pins.map((p) => ({ id: p.id, pricePerDay: p.pricePerDay, lat: p.lat, lng: p.lng, name: p.name, photo: p.photo, location: p.location, seats: p.seats, transmission: p.transmission, year: p.year })));
-  }, []);
-
-  const loadOtherCars = useCallback(async (currentFilters: CarFilters, currentOffset: number, userId?: string) => {
-    const lf = currentFilters.locationFilter;
-    const { data, hasMore: more } = await getCarsFiltered(
-      {
-        type: currentFilters.type,
-        transmission: currentFilters.transmission,
-        seatsMin: currentFilters.seatsMin,
-        priceMin: currentFilters.priceMin,
-        priceMax: currentFilters.priceMax,
-        city: lf.city,
-        district: !lf.city ? lf.district : undefined,
-        citiesInDistrict: !lf.city ? lf.citiesInDistrict : undefined,
-        excludeUserId: userId,
-        sort: currentFilters.sort,
-      },
-      currentOffset,
-      PAGE_SIZE,
-    );
-    if (currentOffset === 0) {
-      setOtherCars(data);
-    } else {
-      setOtherCars((prev) => [...prev, ...data]);
-    }
-    setHasMore(more);
-    setOffset(currentOffset + data.length);
+    setMapPinsLoaded(true);
   }, []);
 
   useIonViewWillEnter(() => {
     setLoading(true);
-    const userId = user?.id;
-    const currentFilters = filters;
-    Promise.all([
-      getMaxPrice('cars_max_price'),
-      userId ? getMyCars() : Promise.resolve([]),
-      loadOtherCars(currentFilters, 0, userId),
-      loadMapPins(currentFilters),
-    ])
-      .then(([max, my]) => {
-        setPriceMax(max);
-        setMyCars(my as Car[]);
-      })
+    setMapPinsLoaded(false);
+    loadCars(filters, 0, user?.id)
       .catch(console.error)
       .finally(() => setLoading(false));
   });
@@ -136,8 +127,12 @@ const Cars: React.FC = () => {
   const handleApplyFilters = (newFilters: CarFilters) => {
     setFilters(newFilters);
     setOffset(0);
-    loadOtherCars(newFilters, 0, user?.id).catch(console.error);
-    loadMapPins(newFilters).catch(console.error);
+    loadCars(newFilters, 0, user?.id).catch(console.error);
+    if (viewMode === 'map') {
+      loadMapPins(newFilters).catch(console.error);
+    } else {
+      setMapPinsLoaded(false);
+    }
   };
 
   const handleReset = () => {
@@ -145,14 +140,9 @@ const Cars: React.FC = () => {
   };
 
   const handleRefresh = async (e: CustomEvent) => {
-    const userId = user?.id;
     setOffset(0);
-    await Promise.all([
-      getMaxPrice('cars_max_price').then(setPriceMax),
-      userId ? getMyCars().then(setMyCars) : Promise.resolve(),
-      loadOtherCars(filters, 0, userId),
-      loadMapPins(filters),
-    ]).catch(console.error);
+    setMapPinsLoaded(false);
+    await loadCars(filters, 0, user?.id).catch(console.error);
     (e.target as HTMLIonRefresherElement).complete();
   };
 
@@ -182,7 +172,13 @@ const Cars: React.FC = () => {
           <IonSegment
             mode="md"
             value={viewMode}
-            onIonChange={(e) => setViewMode(e.detail.value as ViewMode)}
+            onIonChange={(e) => {
+              const newMode = e.detail.value as ViewMode;
+              setViewMode(newMode);
+              if (newMode === 'map' && !mapPinsLoaded) {
+                loadMapPins(filters).catch(console.error);
+              }
+            }}
           >
             <IonSegmentButton value="list" layout="icon-start">
               <IonIcon icon={listOutline} />
@@ -244,7 +240,7 @@ const Cars: React.FC = () => {
           )}
           <IonInfiniteScroll
             onIonInfinite={async (e) => {
-              await loadOtherCars(filters, offset, user?.id);
+              await loadCars(filters, offset, user?.id);
               (e.target as HTMLIonInfiniteScrollElement).complete();
             }}
             disabled={loading || !hasMore}
@@ -271,7 +267,6 @@ const Cars: React.FC = () => {
       <CarsFilterModal
         isOpen={filterOpen}
         filters={filters}
-        priceMax={priceMax}
         onClose={() => setFilterOpen(false)}
         onApply={handleApplyFilters}
       />

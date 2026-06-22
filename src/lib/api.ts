@@ -68,9 +68,15 @@ export interface PagedResult<T> {
   hasMore: boolean;
 }
 
+export interface ListingPage<T> {
+  data: T[];
+  total: number;
+}
+
 interface PagedResponse {
   data: Record<string, unknown>[];
   has_more: boolean;
+  total: number;
 }
 
 // === Shared mappers ===
@@ -167,6 +173,23 @@ const mapTour = (t: Record<string, unknown>): Tour => ({
   maxPeople: t.max_people as number | undefined,
 });
 
+// === HOME ===
+
+export interface HomeData {
+  houses: { data: House[]; total: number };
+  cars:   { data: Car[];   total: number };
+  tours:  { data: Tour[];  total: number };
+}
+
+export const getHomeData = async (): Promise<HomeData> => {
+  const raw = await apiFetch<{ houses: { data: Record<string, unknown>[]; total: number }; cars: { data: Record<string, unknown>[]; total: number }; tours: { data: Record<string, unknown>[]; total: number } }>('/home');
+  return {
+    houses: { data: raw.houses.data.map(mapHouse), total: raw.houses.total },
+    cars:   { data: raw.cars.data.map(mapCar),     total: raw.cars.total },
+    tours:  { data: raw.tours.data.map(mapTour),   total: raw.tours.total },
+  };
+};
+
 // === META ===
 
 let _metaCache: Record<string, unknown> | null = null;
@@ -198,7 +221,6 @@ export interface CarFilterParams {
   city?: string;
   district?: string;
   citiesInDistrict?: string[];
-  excludeUserId?: string;
   sort?: string;
 }
 
@@ -215,9 +237,9 @@ export interface CarPin {
   year?: number;
 }
 
-export const getCars = async (): Promise<Car[]> => {
-  const res = await apiFetch<PagedResponse>(`/cars${buildQuery({ limit: 100 })}`);
-  return res.data.map(mapCar);
+export const getCars = async (): Promise<ListingPage<Car>> => {
+  const res = await apiFetch<PagedResponse>(`/cars${buildQuery({ limit: 10 })}`);
+  return { data: res.data.map(mapCar), total: res.total };
 };
 
 export const getCarsByIds = async (ids: number[]): Promise<Car[]> => {
@@ -236,7 +258,6 @@ export const getCarsFiltered = async (params: CarFilterParams, offset: number, l
     city: params.city || undefined,
     district: params.district || undefined,
     cities_in_district: params.citiesInDistrict,
-    exclude_user_id: params.excludeUserId,
     sort: params.sort,
     offset,
     limit,
@@ -311,7 +332,6 @@ export interface HouseFilterParams {
   priceMax?: number;
   minRooms?: number;
   minGuests?: number;
-  excludeUserId?: string;
   sort?: string;
 }
 
@@ -327,9 +347,9 @@ export interface HousePin {
   guests?: number;
 }
 
-export const getHouses = async (): Promise<House[]> => {
-  const res = await apiFetch<PagedResponse>(`/houses${buildQuery({ limit: 100 })}`);
-  return res.data.map(mapHouse);
+export const getHouses = async (): Promise<ListingPage<House>> => {
+  const res = await apiFetch<PagedResponse>(`/houses${buildQuery({ limit: 10 })}`);
+  return { data: res.data.map(mapHouse), total: res.total };
 };
 
 export const getHousesByIds = async (ids: number[]): Promise<House[]> => {
@@ -348,7 +368,6 @@ export const getHousesFiltered = async (params: HouseFilterParams, offset: numbe
     price_max: params.priceMax,
     min_rooms: params.minRooms && params.minRooms > 0 ? params.minRooms : undefined,
     min_guests: params.minGuests && params.minGuests > 0 ? params.minGuests : undefined,
-    exclude_user_id: params.excludeUserId,
     sort: params.sort,
     offset,
     limit,
@@ -443,9 +462,9 @@ export interface FavoritePin {
   meetingPoint?: string;
 }
 
-export const getTours = async (): Promise<Tour[]> => {
-  const res = await apiFetch<PagedResponse>(`/tours${buildQuery({ limit: 100 })}`);
-  return res.data.map(mapTour);
+export const getTours = async (): Promise<ListingPage<Tour>> => {
+  const res = await apiFetch<PagedResponse>(`/tours${buildQuery({ limit: 10 })}`);
+  return { data: res.data.map(mapTour), total: res.total };
 };
 
 export const getToursByIds = async (ids: number[]): Promise<Tour[]> => {
