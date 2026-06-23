@@ -1,31 +1,90 @@
-.location-modal-map {
-  height: calc(100% - 56px);
-  min-height: 400px;
+/* Layout */
+.location-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
-.location-modal-coords {
-  padding: 8px 16px;
+.location-search-area {
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+  padding: 16px 16px 50px;
+  background: #fff;
+}
+
+.location-map-wrapper {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Search input */
+.location-search-label {
   font-size: 13px;
   color: #666;
-  text-align: center;
+  margin: 0 0 10px;
+  line-height: 1.4;
+  display: block;
 }
 
-.location-outside-warning {
-  padding: 8px 16px;
-  font-size: 13px;
-  color: #c62828;
-  text-align: center;
-  background: #ffebee;
-  border-top: 1px solid #ffcdd2;
+.location-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0f4f5;
+  border-radius: 10px;
+  padding: 0 12px;
+  height: 42px;
 }
 
-.location-list-header {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #0E7490;
-  --color: #0E7490;
+.location-search-icon {
+  font-size: 18px;
+  color: #888;
+  flex-shrink: 0;
+}
+
+.location-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  color: #111;
+  outline: none;
+  min-width: 0;
+}
+
+.location-search-input::placeholder {
+  color: #aaa;
+}
+
+.location-search-clear {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #aaa;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+/* Suggestions dropdown */
+.location-search-field-wrapper {
+  position: relative;
+}
+
+.location-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 20;
 }
 
 .location-district-note {
@@ -36,26 +95,82 @@
   line-height: 1.3;
 }
 
+/* Map */
+.location-modal-map {
+  width: 100%;
+  height: 100%;
+}
+
+.location-map-hint {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 13px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.location-map-address-card {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+  font-size: 14px;
+  color: #222;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.location-map-address-card ion-spinner {
+  width: 16px;
+  height: 16px;
+  --color: #0E7490;
+  flex-shrink: 0;
+}
+
+/* Geolocation button */
+.location-geo-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #0E7490;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 22px;
+  color: #fff;
+}
+
+.location-geo-btn:disabled {
+  opacity: 0.6;
+}
+
+.location-geo-spinner {
+  width: 16px;
+  height: 16px;
+  --color: #fff;
+}
+
+/* Footer */
 .location-footer {
   background: #fff;
   border-top: 1px solid #e0e0e0;
-}
-
-.location-map-suggestion {
-  padding: 10px 16px 12px;
-  text-align: center;
-}
-
-.location-map-suggestion p {
-  font-size: 13px;
-  color: #444;
-  margin: 0 0 8px;
-  line-height: 1.4;
-}
-
-.location-map-suggestion ion-button {
-  --border-color: #0E7490;
-  --color: #0E7490;
 }
 
 .location-confirm-btn {
@@ -63,12 +178,38 @@
   margin: 8px 16px;
 }
 
+/* Marker */
+.location-marker-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(-50%) translateY(-100%);
+}
+
+.location-marker-label {
+  background: #0E7490;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.location-marker-label.loading {
+  opacity: 0.7;
+}
+
 .location-map-marker {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: #0E7490;
   border: 2px solid #fff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
-  transform: translateX(-50%) translateY(-50%);
 }

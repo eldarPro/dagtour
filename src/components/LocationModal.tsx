@@ -7,7 +7,6 @@ import {
   IonButtons,
   IonButton,
   IonContent,
-  IonSearchbar,
   IonList,
   IonItem,
   IonLabel,
@@ -17,7 +16,7 @@ import {
   IonAlert,
   IonSpinner,
 } from '@ionic/react';
-import { closeOutline, mapOutline, arrowBackOutline } from 'ionicons/icons';
+import { closeOutline, searchOutline, locateOutline } from 'ionicons/icons';
 import { dadataService, formatShortAddress } from '../services/dadataService';
 import type { AddressData } from '../services/dadataService';
 import type { LocationValue } from './LocationPicker';
@@ -90,37 +89,42 @@ interface Props {
   onSelect: (loc: LocationValue) => void;
 }
 
-type Mode = 'list' | 'map';
-
 const LocationModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
-  const [mode, setMode] = useState<Mode>('list');
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<AddressData[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [mapCoords, setMapCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [mapAddress, setMapAddress] = useState<string | null>(null);
   const [mapCity, setMapCity] = useState<string | null>(null);
   const [mapDistrict, setMapDistrict] = useState<string | null>(null);
   const [mapRegion, setMapRegion] = useState<string | null>(null);
   const [outsideAlert, setOutsideAlert] = useState(false);
+  const [mapPresented, setMapPresented] = useState(false);
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [geoError, setGeoError] = useState(false);
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
+  const markerLabelRef = useRef<HTMLDivElement>(null);
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
-      setMode('list');
       setQuery('');
       setSuggestions([]);
       setIsSearching(false);
+      setShowSuggestions(false);
       setMapCoords(null);
       setMapAddress(null);
       setMapCity(null);
       setMapDistrict(null);
       setMapRegion(null);
       setOutsideAlert(false);
+    } else {
+      setMapPresented(false);
     }
   }, [isOpen]);
 
@@ -128,6 +132,7 @@ const LocationModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
     if (query.trim().length >= 2) {
       setIsSearching(true);
+      setShowSuggestions(true);
       searchTimeout.current = setTimeout(async () => {
         const results = await dadataService.suggestAddress(query.trim());
         setSuggestions(results);
@@ -136,6 +141,7 @@ const LocationModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
     } else {
       setSuggestions([]);
       setIsSearching(false);
+      if (query.trim().length === 0) setShowSuggestions(false);
     }
     return () => {
       if (searchTimeout.current) clearTimeout(searchTimeout.current);
@@ -143,7 +149,7 @@ const LocationModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
   }, [query]);
 
   useEffect(() => {
-    if (!isOpen || mode !== 'map') return;
+    if (!mapPresented) return;
 
     let cancelled = false;
 
@@ -173,19 +179,32 @@ const LocationModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
           }
 
           if (markerRef.current) map.removeChild(markerRef.current);
-          const el = document.createElement('div');
-          el.className = 'location-map-marker';
-          const marker = new YMapMarker({ coordinates: [lng, lat] }, el);
+
+          const wrapper = document.createElement('div');
+          wrapper.className = 'location-marker-wrapper';
+          const label = document.createElement('div');
+          label.className = 'location-marker-label loading';
+          label.textContent = '...';
+          const pin = document.createElement('div');
+          pin.className = 'location-map-marker';
+          wrapper.appendChild(label);
+          wrapper.appendChild(pin);
+
+          const marker = new YMapMarker({ coordinates: [lng, lat] }, wrapper);
           map.addChild(marker);
           markerRef.current = marker;
+          (markerLabelRef as any).current = label;
 
           setMapCoords({ lat, lng });
           setMapAddress('Загрузка адреса...');
           setMapCity(null);
           setMapDistrict(null);
           setMapRegion(null);
+          setShowSuggestions(false);
           reverseGeocode(lat, lng).then(({ address, city, district, region }) => {
             if (!cancelled) {
+              label.textContent = address;
+              label.classList.remove('loading');
               setMapAddress(address);
               setMapCity(city);
               setMapDistrict(district);
@@ -221,7 +240,22 @@ const LocationModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
       mapRef.current = null;
       markerRef.current = null;
     };
-  }, [isOpen, mode]);
+  }, [mapPresented]);
+
+  const placeMarkerOnMap = (lat: number, lng: number) => {
+    const map = mapRef.current;
+    if (!map) return;
+    const ymaps3 = (window as any).ymaps3;
+    if (!ymaps3) return;
+    const { YMapMarker } = ymaps3;
+    if (markerRef.current) map.removeChild(markerRef.current);
+    const el = document.createElement('div');
+    el.className = 'location-map-marker';
+    const marker = new YMapMarker({ coordinates: [lng, lat] }, el);
+    map.addChild(marker);
+    markerRef.current = marker;
+    map.update({ location: { center: [lng, lat], zoom: 14, duration: 400 } });
+  };
 
   const handleSelectSuggestion = (s: AddressData) => {
     if (!s.lat || !s.lng) return;
@@ -247,110 +281,185 @@ const LocationModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
     });
   };
 
+  const handleGeolocate = () => {
+    if (!navigator.geolocation) return;
+    setGeoLoading(true);
+    setGeoError(false);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const { latitude: lat, longitude: lng } = coords;
+        setGeoLoading(false);
+        if (!isInDagestan(lat, lng)) {
+          setOutsideAlert(true);
+          return;
+        }
+        const map = mapRef.current;
+        if (!map) return;
+        const ymaps3 = (window as any).ymaps3;
+        if (!ymaps3) return;
+        const { YMapMarker } = ymaps3;
+        if (markerRef.current) map.removeChild(markerRef.current);
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'location-marker-wrapper';
+        const label = document.createElement('div');
+        label.className = 'location-marker-label loading';
+        label.textContent = '...';
+        const pin = document.createElement('div');
+        pin.className = 'location-map-marker';
+        wrapper.appendChild(label);
+        wrapper.appendChild(pin);
+
+        const marker = new YMapMarker({ coordinates: [lng, lat] }, wrapper);
+        map.addChild(marker);
+        markerRef.current = marker;
+        map.update({ location: { center: [lng, lat], zoom: 14, duration: 400 } });
+
+        setMapCoords({ lat, lng });
+        setMapAddress('Загрузка адреса...');
+        setMapCity(null);
+        setMapDistrict(null);
+        setMapRegion(null);
+
+        reverseGeocode(lat, lng).then(({ address, city, district, region }) => {
+          label.textContent = address;
+          label.classList.remove('loading');
+          setMapAddress(address);
+          setMapCity(city);
+          setMapDistrict(district);
+          setMapRegion(region);
+        });
+      },
+      () => {
+        setGeoLoading(false);
+        setGeoError(true);
+      },
+      { timeout: 8000 }
+    );
+  };
+
+  const isAddressLoading = mapAddress === 'Загрузка адреса...';
+
   return (
-    <IonModal isOpen={isOpen} onDidDismiss={onClose}>
+    <IonModal
+      isOpen={isOpen}
+      onDidPresent={() => setMapPresented(true)}
+      onDidDismiss={onClose}
+      style={{ '--height': '100%', '--width': '100%', '--border-radius': '0' }}
+    >
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            {mode === 'map' ? (
-              <IonButton onClick={() => setMode('list')}>
-                <IonIcon slot="icon-only" icon={arrowBackOutline} />
-              </IonButton>
-            ) : (
-              <IonButton onClick={onClose}>
-                <IonIcon slot="icon-only" icon={closeOutline} />
-              </IonButton>
-            )}
+            <IonButton onClick={onClose}>
+              <IonIcon slot="icon-only" icon={closeOutline} />
+            </IonButton>
           </IonButtons>
-          <IonTitle>{mode === 'map' ? 'Выбор на карте' : 'Местоположение'}</IonTitle>
+          <IonTitle>Местоположение</IonTitle>
         </IonToolbar>
-        {mode === 'list' && (
-          <IonToolbar>
-            <IonSearchbar
-              value={query}
-              onIonInput={(e) => setQuery((e.detail.value as string) ?? '')}
-              placeholder="Введите адрес или населённый пункт..."
-              debounce={0}
-            />
-          </IonToolbar>
-        )}
       </IonHeader>
 
-      <IonContent>
-        {mode === 'map' ? (
-          <>
-            <div ref={mapContainerRef} className="location-modal-map" />
-            <IonAlert
-              isOpen={outsideAlert}
-              onDidDismiss={() => setOutsideAlert(false)}
-              header="Вне зоны"
-              message="Пожалуйста, выберите точку на территории Дагестана."
-              buttons={['OK']}
-            />
-            {mapAddress && (
-              <div className="location-modal-coords">{mapAddress}</div>
-            )}
-          </>
-        ) : (
-          <IonList lines="inset">
-            {query.trim().length < 2 ? (
-              <IonItem>
-                <IonLabel color="medium" style={{ fontSize: 14 }}>
-                  Введите не менее 2 символов для поиска
-                </IonLabel>
-              </IonItem>
-            ) : isSearching ? (
-              <IonItem>
-                <IonSpinner name="crescent" slot="start" />
-                <IonLabel color="medium">Поиск...</IonLabel>
-              </IonItem>
-            ) : suggestions.length === 0 ? (
-              <IonItem>
-                <IonLabel color="medium">Ничего не найдено</IonLabel>
-              </IonItem>
-            ) : (
-              suggestions.map((s, i) => (
-                <IonItem
-                  button
-                  key={i}
-                  onClick={() => handleSelectSuggestion(s)}
-                  disabled={!s.lat || !s.lng}
-                >
-                  <IonLabel>{formatShortAddress(s) || s.city}</IonLabel>
-                  {s.district && (
-                    <IonNote slot="end" className="location-district-note">
-                      {s.district}
-                    </IonNote>
+      <IonContent scrollY={false}>
+        <div className="location-layout">
+          <div className="location-search-area">
+            <label htmlFor="location-search-input" className="location-search-label">
+              Введите адрес и выберите из списка или укажите точку на карте
+            </label>
+            <div className="location-search-field-wrapper">
+              <div className="location-search-box">
+                <IonIcon icon={searchOutline} className="location-search-icon" />
+                <input
+                  ref={inputRef}
+                  id="location-search-input"
+                  className="location-search-input"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onFocus={() => { if (query.trim().length >= 2) setShowSuggestions(true); }}
+                  placeholder="Поиск по адресу или населённому пункту"
+                />
+                {query.length > 0 && (
+                  <button className="location-search-clear" onClick={() => { setQuery(''); setShowSuggestions(false); }}>✕</button>
+                )}
+              </div>
+
+            {showSuggestions && (
+              <div className="location-suggestions">
+                <IonList lines="inset">
+                  {isSearching ? (
+                    <IonItem>
+                      <IonSpinner name="crescent" slot="start" />
+                      <IonLabel color="medium">Поиск...</IonLabel>
+                    </IonItem>
+                  ) : suggestions.length === 0 ? (
+                    <IonItem>
+                      <IonLabel color="medium">Ничего не найдено</IonLabel>
+                    </IonItem>
+                  ) : (
+                    suggestions.map((s, i) => (
+                      <IonItem
+                        button
+                        key={i}
+                        onClick={() => handleSelectSuggestion(s)}
+                        disabled={!s.lat || !s.lng}
+                      >
+                        <IonLabel>{formatShortAddress(s) || s.city}</IonLabel>
+                        {s.district && (
+                          <IonNote slot="end" className="location-district-note">
+                            {s.district}
+                          </IonNote>
+                        )}
+                      </IonItem>
+                    ))
                   )}
-                </IonItem>
-              ))
+                </IonList>
+              </div>
             )}
-          </IonList>
-        )}
+            </div>
+          </div>
+
+          <div className="location-map-wrapper" onClick={() => setShowSuggestions(false)}>
+            <div ref={mapContainerRef} className="location-modal-map" />
+            {!mapCoords && (
+              <div className="location-map-hint">Нажмите на карту, чтобы выбрать точку</div>
+            )}
+            <button className="location-geo-btn" onClick={(e) => { e.stopPropagation(); handleGeolocate(); }} disabled={geoLoading}>
+              {geoLoading
+                ? <IonSpinner name="crescent" className="location-geo-spinner" />
+                : <IonIcon icon={locateOutline} />
+              }
+            </button>
+          </div>
+        </div>
+
+        <IonAlert
+          isOpen={outsideAlert}
+          onDidDismiss={() => setOutsideAlert(false)}
+          header="Вне зоны"
+          message="Пожалуйста, выберите точку на территории Дагестана."
+          buttons={['OK']}
+        />
+        <IonAlert
+          isOpen={geoError}
+          onDidDismiss={() => setGeoError(false)}
+          header="Нет доступа"
+          message="Не удалось определить местоположение. Проверьте, разрешён ли доступ к геолокации."
+          buttons={['OK']}
+        />
       </IonContent>
 
-      <IonFooter>
-        <div className="location-footer">
-          {mode === 'map' ? (
+      {mapCoords && (
+        <IonFooter>
+          <div className="location-footer">
             <IonButton
               expand="block"
               className="location-confirm-btn"
-              disabled={!mapCoords || !mapAddress || mapAddress === 'Загрузка адреса...'}
+              disabled={!mapAddress || isAddressLoading}
               onClick={handleConfirmMap}
             >
               Применить
             </IonButton>
-          ) : (
-            <div className="location-map-suggestion">
-              <p>Если нужен точный адрес до улицы или дома — выберите точку на карте</p>
-              <IonButton expand="block" fill="outline" onClick={() => setMode('map')}>
-                <IonIcon slot="start" icon={mapOutline} />
-                Выбрать на карте
-              </IonButton>
-            </div>
-          )}
-        </div>
-      </IonFooter>
+          </div>
+        </IonFooter>
+      )}
     </IonModal>
   );
 };
